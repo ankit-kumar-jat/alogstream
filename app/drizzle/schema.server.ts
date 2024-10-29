@@ -1,7 +1,9 @@
 import { relations } from "drizzle-orm";
-import { pgTable as table } from "drizzle-orm/pg-core";
+import {  PgSchema} from "drizzle-orm/pg-core";
 import * as t from "drizzle-orm/pg-core";
 import { createId as cuid } from "@paralleldrive/cuid2";
+
+export const schema = new PgSchema("algostream_schema");
 
 const timestamps = {
   updated_at: t.timestamp({ mode: "date" }).defaultNow().notNull(),
@@ -9,7 +11,7 @@ const timestamps = {
   deleted_at: t.timestamp({ mode: "date" }),
 };
 
-export const users = table("users", {
+export const users = schema.table("users", {
   id: t.serial().primaryKey(),
   name: t.varchar("name", { length: 256 }),
   email: t.varchar("email", { length: 256 }).notNull().unique(),
@@ -23,7 +25,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   tradeAccounts: many(tradeAccounts),
 }));
 
-export const passwords = table("passwords", {
+export const passwords = schema.table("passwords", {
   hash: t.text("hash").notNull(),
   userId: t
     .integer("user_id")
@@ -35,7 +37,7 @@ export const passwordsRelations = relations(passwords, ({ one }) => ({
   user: one(users, { fields: [passwords.userId], references: [users.id] }),
 }));
 
-export const sessions = table("sessions", {
+export const sessions = schema.table("sessions", {
   id: t
     .varchar({ length: 256 })
     .primaryKey()
@@ -44,7 +46,7 @@ export const sessions = table("sessions", {
     .integer("user_id")
     .references(() => users.id)
     .notNull(),
-  expirationDate: t.timestamp({ mode: "date" }).notNull(),
+  expirationDate: t.timestamp("expiration_date",{ mode: "date" }).notNull(),
   ...timestamps,
 });
 
@@ -52,7 +54,7 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, { fields: [sessions.userId], references: [users.id] }),
 }));
 
-export const tradeAccounts = table("trade_accounts", {
+export const tradeAccounts = schema.table("trade_accounts", {
   id: t.serial().primaryKey(),
   userId: t.integer("user_id").references(() => users.id),
   type: t.varchar({ length: 256 }).notNull().default("ANGLEONE"),

@@ -1,10 +1,11 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { remember } from "@epic-web/remember";
+import * as schema from "~/drizzle/schema.server"
 
 const db = remember("drizzle", () => {
   // NOTE: if you change anything in this function you'll need to restart
   // the dev server to see your changes.
-  return drizzle(process.env.DATABASE_URL);
+  return drizzle(process.env.DATABASE_URL, {schema});
 });
 
 export { db };
