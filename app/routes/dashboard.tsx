@@ -7,6 +7,7 @@ import {
   ChartPie,
   ChevronsUpDown,
   CreditCard,
+  FlaskConical,
   Link as LinkIcon,
   LogOut,
   Sparkles,
@@ -94,6 +95,11 @@ const SIDEBAR_LINKS = [
     icon: ChartCandlestick,
   },
   {
+    title: 'Backtests',
+    url: '/dashboard/backtests',
+    icon: FlaskConical,
+  },
+  {
     title: 'Broker Accounts',
     url: '/dashboard/broker-accounts',
     icon: LinkIcon,
@@ -111,7 +117,7 @@ export function AppSidebar() {
                 <span>
                   <TrendingUp width={28} height={28} />
                 </span>
-                <span className="text-xl font-semibold leading-none">
+                <span className="text-xl font-bold leading-tight">
                   {SITE_NAME}
                 </span>
               </Link>
