@@ -1,7 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { data, redirect } from '@remix-run/node'
 import { Form, Link, useActionData, useSearchParams } from '@remix-run/react'
-import { drizzle } from 'drizzle-orm/d1'
 import { LoaderPinwheel } from 'lucide-react'
 import { z } from 'zod'
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'

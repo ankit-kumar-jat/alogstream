@@ -4,3 +4,4 @@
 .env
 /.cache
 /build
+/postgres-data

@@ -1,11 +1,9 @@
 import { redirect } from '@remix-run/node'
-import { and, eq, gt } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
 import { safeRedirect } from 'remix-utils/safe-redirect'
 import { authSessionStorage } from '~/lib/session.server'
 import { combineHeaders } from '~/lib/utils'
 import { db } from '~/lib/db.server'
-import { passwords, sessions, users } from '~/drizzle/schema.server'
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30
 export const getSessionExpirationDate = () =>
@@ -19,19 +17,19 @@ export async function getUserId(request: Request) {
   )
   const sessionId = authSession.get(sessionKey)
   if (!sessionId) return null
-  const session = await db.query.sessions.findFirst({
-    where: (sessions, { eq, gt }) =>
-      and(eq(sessions.id, sessionId), gt(sessions.expirationDate, new Date())),
+  const session = await db.session.findUnique({
+    select: { user: { select: { id: true } } },
+    where: { id: sessionId, expirationDate: { gt: new Date() } },
   })
 
-  if (!session?.userId) {
+  if (!session?.user) {
     throw redirect('/', {
       headers: {
         'set-cookie': await authSessionStorage.destroySession(authSession),
       },
     })
   }
-  return session.userId
+  return session.user.id
 }
 
 export async function requireUserId(
@@ -70,32 +68,36 @@ export async function login({
 }) {
   const user = await verifyUserPassword({ email, password })
   if (!user) return null
-  const session = await db
-    .insert(sessions)
-    .values({
+
+  const session = await db.session.create({
+    select: { id: true, expirationDate: true, userId: true },
+    data: {
       expirationDate: getSessionExpirationDate(),
       userId: user.id,
-    })
-    .returning()
+    },
+  })
 
-  return session[0]
+  return session
 }
 
 export async function resetUserPassword({
   userId,
   password,
 }: {
-  userId: number
+  userId: string
   password: string
 }) {
   const hashedPassword = await getPasswordHash(password)
-  const updated = await db
-    .update(passwords)
-    .set({ hash: hashedPassword })
-    .where(eq(passwords.userId, userId))
-    .returning({ userId: passwords.userId })
-
-  return updated[0]
+  return db.user.update({
+    where: { id: userId },
+    data: {
+      password: {
+        update: {
+          hash: hashedPassword,
+        },
+      },
+    },
+  })
 }
 
 export async function signup({
@@ -109,28 +111,22 @@ export async function signup({
 }) {
   const hashedPassword = await getPasswordHash(password)
 
-  const session = await db.transaction(async txn => {
-    const user = await txn
-      .insert(users)
-      .values({ email: email.toLowerCase(), name })
-      .returning()
-
-    await txn
-      .insert(passwords)
-      .values({ hash: hashedPassword, userId: user[0].id })
-
-    const session = await txn
-      .insert(sessions)
-      .values({
-        expirationDate: getSessionExpirationDate(),
-        userId: user[0].id,
-      })
-      .returning({
-        id: sessions.id,
-        userId: sessions.userId,
-        expirationDate: sessions.expirationDate,
-      })
-    return session[0]
+  const session = await db.session.create({
+    data: {
+      expirationDate: getSessionExpirationDate(),
+      user: {
+        create: {
+          email: email.toLowerCase(),
+          name,
+          password: {
+            create: {
+              hash: hashedPassword,
+            },
+          },
+        },
+      },
+    },
+    select: { id: true, expirationDate: true },
   })
 
   return session
@@ -154,10 +150,8 @@ export async function logout(
   // and it doesn't do any harm staying in the db anyway.
   if (sessionId) {
     // the .catch is important because that's what triggers the query.
-    void db
-      .delete(sessions)
-      .where(eq(sessions.id, sessionId))
-      .catch(() => {})
+    // learn more about PrismaPromise: https://www.prisma.io/docs/orm/reference/prisma-client-reference#prismapromise-behavior
+    void db.session.deleteMany({ where: { id: sessionId } }).catch(() => {})
   }
   throw redirect(safeRedirect(redirectTo), {
     ...responseInit,
@@ -180,9 +174,9 @@ export async function verifyUserPassword({
   email: string
   password: string
 }) {
-  const userWithPassword = await db.query.users.findFirst({
-    where: (users, { eq }) => eq(users.email, email),
-    with: { password: true },
+  const userWithPassword = await db.user.findUnique({
+    where: { email },
+    select: { id: true, password: { select: { hash: true } } },
   })
 
   if (!userWithPassword || !userWithPassword.password) {

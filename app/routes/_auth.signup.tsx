@@ -7,7 +7,6 @@ import {
   useActionData,
   useSearchParams,
 } from '@remix-run/react'
-import { drizzle } from 'drizzle-orm/d1'
 import { LoaderPinwheel } from 'lucide-react'
 import { z } from 'zod'
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
@@ -21,8 +20,6 @@ import {
 import { useIsPending } from '~/hooks/use-is-pending'
 import { Button } from '~/components/ui/button'
 import { ErrorList, InputField } from '~/components/ui/input-field'
-import { users } from '~/drizzle/schema.server'
-import { eq } from 'drizzle-orm'
 import { authSessionStorage } from '~/lib/session.server'
 import { safeRedirect } from 'remix-utils/safe-redirect'
 import { db } from '~/lib/db.server'
@@ -47,9 +44,10 @@ export async function action({ request, context }: ActionFunctionArgs) {
   const submission = await parseWithZod(formData, {
     schema: intent =>
       SignupFormSchema.superRefine(async (data, ctx) => {
-        const existingUser = (
-          await db.select().from(users).where(eq(users.email, data.email))
-        )[0]
+        const existingUser = await db.user.findUnique({
+          where: { email: data.email },
+          select: { id: true },
+        })
 
         if (existingUser) {
           ctx.addIssue({
