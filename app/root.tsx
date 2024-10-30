@@ -16,6 +16,7 @@ import './tailwind.css'
 import { makeTimings, time } from './lib/timings.server'
 import { getUserId, logout } from './lib/auth.server'
 import { db } from './lib/db.server'
+import { LoadingProgress } from '~/components/progress-bar'
 
 export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -89,5 +90,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />
+  return (
+    <>
+      <Outlet />
+      <LoadingProgress />
+    </>
+  )
 }

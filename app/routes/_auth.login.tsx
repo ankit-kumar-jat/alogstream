@@ -1,7 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { data, redirect } from '@remix-run/node'
 import { Form, Link, useActionData, useSearchParams } from '@remix-run/react'
-import { LoaderPinwheel } from 'lucide-react'
 import { z } from 'zod'
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
@@ -86,7 +85,7 @@ export default function Login() {
       <div className="mx-auto flex w-full max-w-96 flex-col justify-center space-y-6">
         <div className="flex flex-col space-y-2 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">Login</h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Enter your email below to login
           </p>
         </div>
@@ -160,12 +159,7 @@ function LoginForm() {
             <input {...getInputProps(fields.redirectTo, { type: 'hidden' })} />
             <ErrorList errors={form.errors} id={form.errorId} />
           </div>
-          <Button disabled={isPending}>
-            {isPending && (
-              <LoaderPinwheel className="mr-2 h-4 w-4 animate-spin" />
-            )}
-            Login with Password
-          </Button>
+          <Button disabled={isPending}>Login with Password</Button>
         </div>
       </Form>
     </div>

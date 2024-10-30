@@ -7,7 +7,6 @@ import {
   useActionData,
   useSearchParams,
 } from '@remix-run/react'
-import { LoaderPinwheel } from 'lucide-react'
 import { z } from 'zod'
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
@@ -120,7 +119,7 @@ export default function Signup() {
           <h1 className="text-2xl font-semibold tracking-tight">
             Create an account
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Enter your email below to create your account
           </p>
         </div>
@@ -234,12 +233,7 @@ function SignupForm() {
             <input {...getInputProps(fields.redirectTo, { type: 'hidden' })} />
             <ErrorList errors={form.errors} id={form.errorId} />
           </div>
-          <Button disabled={isPending}>
-            {isPending && (
-              <LoaderPinwheel className="mr-2 h-4 w-4 animate-spin" />
-            )}
-            Create Account
-          </Button>
+          <Button disabled={isPending}>Create Account</Button>
         </div>
       </Form>
     </div>
