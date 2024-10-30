@@ -2,7 +2,7 @@ import { useRouteLoaderData } from '@remix-run/react'
 import { type loader as rootLoader } from '~/root'
 
 function isUser(user: any) {
-  return user && typeof user === 'object' && typeof user.id === 'number'
+  return user && typeof user === 'object' && typeof user.id === 'string'
 }
 
 export function useOptionalUser() {
