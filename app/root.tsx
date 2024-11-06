@@ -60,7 +60,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     await logout({ request, redirectTo: '/' })
   }
 
-  console.log('🚀 ~ loader ~ user:', user)
   return data({ user }, { headers: { 'Server-Timing': timings.toString() } })
 }
 

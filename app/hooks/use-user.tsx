@@ -7,7 +7,6 @@ function isUser(user: any) {
 
 export function useOptionalUser() {
   const data = useRouteLoaderData<typeof rootLoader>('root')
-  console.log('🚀 ~ useOptionalUser ~ data:', data)
   if (!data || !isUser(data.user)) {
     return undefined
   }

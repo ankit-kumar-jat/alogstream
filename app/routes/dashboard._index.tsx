@@ -21,7 +21,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Dashboard() {
   return (
-    <div className="space-y-4 py-4">
+    <div className="container mx-auto my-10 space-y-4 px-4">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-lg font-bold md:text-xl">Dashboard</h1>
         <p className="text-right text-sm">Last updated: Today, 12:30 PM</p>

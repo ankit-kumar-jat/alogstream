@@ -67,7 +67,7 @@ export default function DashboardLayout() {
                 </Button>
               </Form>
             </div>
-            <main className="container mx-auto px-4">
+            <main className="mx-auto">
               <Outlet />
             </main>
           </div>

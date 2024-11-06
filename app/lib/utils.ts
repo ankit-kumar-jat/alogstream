@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from 'clsx'
+import { jwtDecode } from 'jwt-decode'
 import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
@@ -35,4 +36,38 @@ export function combineHeaders(
     }
   }
   return combined
+}
+
+/**
+ * construct full url from base, pathname and params object
+ */
+export function buildURL(
+  baseUrl: string,
+  endpoint: string,
+  params?: string[][] | Record<string, string> | string | URLSearchParams,
+) {
+  const searchParams = new URLSearchParams(params)
+
+  if (endpoint.startsWith('/')) {
+    endpoint = endpoint.substring(1)
+  }
+  const url = new URL(endpoint, baseUrl)
+  url.search = searchParams.toString()
+
+  return url.toString()
+}
+
+export function isTokenExpired(token: string) {
+  if (!token) return true
+  try {
+    const decodedToken = jwtDecode(token)
+    const currentTime = Date.now() / 1000 + 30 // NOTE +30 will mark token expired 30 secounds early
+    if (!decodedToken.exp) {
+      return false // there is no expiry set
+    }
+    return decodedToken.exp < currentTime
+  } catch (error) {
+    console.error('Error decoding token:', error)
+    return true
+  }
 }
