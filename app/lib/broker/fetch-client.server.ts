@@ -1,5 +1,5 @@
 import https from 'node:https'
-import { API_URL } from '~/config/angleone-api'
+import { API_URL } from '~/config/angleone'
 
 import { buildURL } from '~/lib/utils'
 

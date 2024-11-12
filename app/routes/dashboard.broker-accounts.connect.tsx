@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, data, redirect } from '@remix-run/node'
-import { API_URL_LOGIN } from '~/config/angleone-api'
+import { API_URL_LOGIN } from '~/config/angleone'
 import { requireUserId } from '~/lib/auth.server'
 import { buildURL } from '~/lib/utils'
 
@@ -30,7 +30,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     userId,
   })
 
-  return { success: true }
+  return redirect('/dashboard/broker-accounts')
 }
 
 export async function action({ request }: ActionFunctionArgs) {

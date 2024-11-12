@@ -1,6 +1,10 @@
 import { db } from '~/lib/db.server'
 import { fetchClient } from './fetch-client.server'
-import { AngleoneGenerateToken, AngleoneUserProfile } from '~/types/angleone'
+import {
+  AngleoneGenerateToken,
+  AngleoneScrip,
+  AngleoneUserProfile,
+} from '~/types/angleone'
 import { isTokenExpired } from '~/lib/utils'
 
 export async function getToken({

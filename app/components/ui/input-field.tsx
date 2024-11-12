@@ -1,7 +1,8 @@
-import { useId } from 'react'
+import { ReactNode, useId } from 'react'
 import { Input } from './input'
 import { Label } from './label'
 import { Textarea } from './textarea'
+import { Select } from './select'
 
 export type ListOfErrors = Array<string | null | undefined> | null | undefined
 
@@ -84,4 +85,34 @@ function TextareaField({
 
 TextareaField.displayName = 'TextareaField'
 
-export { ErrorList, InputField, TextareaField }
+function FormField({
+  inputId,
+  labelProps,
+  errors,
+  className,
+  children,
+}: {
+  labelProps: React.LabelHTMLAttributes<HTMLLabelElement>
+  inputId?: string
+  errors?: ListOfErrors
+  className?: string
+  children: ReactNode
+}) {
+  const fallbackId = useId()
+  const id = inputId ?? fallbackId
+  const errorId = errors?.length ? `${id}-error` : undefined
+
+  return (
+    <div className={className}>
+      <Label htmlFor={id} {...labelProps} />
+      {children}
+      <div className="px-4 py-1">
+        {errorId ? <ErrorList id={errorId} errors={errors} /> : null}
+      </div>
+    </div>
+  )
+}
+
+FormField.displayName = 'FormField'
+
+export { ErrorList, InputField, TextareaField, FormField }

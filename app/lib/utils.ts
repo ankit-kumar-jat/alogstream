@@ -61,7 +61,7 @@ export function isTokenExpired(token: string) {
   if (!token) return true
   try {
     const decodedToken = jwtDecode(token)
-    const currentTime = Date.now() / 1000 + 30 // NOTE +30 will mark token expired 30 secounds early
+    const currentTime = Math.round(Date.now() / 1000) + 30 // NOTE +30 will mark token expired 30 secounds early
     if (!decodedToken.exp) {
       return false // there is no expiry set
     }

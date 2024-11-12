@@ -1,0 +1,3 @@
+- only accept webhook/signal calls in market open time
+- stop accepting webhook signal calls 5 min before market closes
+- run chorn job 4 min before market close to close all pending prders
