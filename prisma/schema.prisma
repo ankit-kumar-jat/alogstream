@@ -68,6 +68,7 @@ model BrokerAccount {
   userId String
 
   signals Signal[]
+  Order   Order[]
 }
 
 model Order {
@@ -92,6 +93,9 @@ model Order {
 
   signal   Signal @relation(fields: [signalId], references: [id])
   signalId String
+
+  brokerAccount   BrokerAccount @relation(fields: [brokerAccountId], references: [id])
+  brokerAccountId String
 }
 
 // strategy is the one that generates signals 
@@ -117,10 +121,10 @@ model Signal {
   description String
   label       String?
 
-  status String @default("DRAFT") // DRAFT, ACTIVE, INACTIVE, ARCHIVED
+  status SignalStatus @default(DRAFT) // DRAFT, ACTIVE, INACTIVE, ARCHIVED
   type   String // DELIVERY, CARRYFORWARD, MARGIN, INTRADAY
 
-  exchange           String
+  exchange           Exchange
   tickerSymbol       String
   tickerSymbolToken  String
   targetStopLossType String //  ABSOLUTE/POINTS or PERCENTAGE
@@ -135,4 +139,29 @@ model Signal {
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
   Order  Order[]
+}
+
+model Instrument {
+  token    String   @id
+  symbol   String
+  name     String
+  expiry   String?
+  type     String?
+  exchange Exchange
+}
+
+enum SignalStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum Exchange {
+  BSE
+  NSE
+  NFO
+  MCX
+  BFO
+  CDS
 }
