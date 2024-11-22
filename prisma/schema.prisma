@@ -1,0 +1,205 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String  @id @default(cuid())
+  email           String  @unique
+  name            String?
+  isEmailVerified Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  password         Password?
+  sessions         Session[]
+  BrokerAccount    BrokerAccount[]
+  Signal           Signal[]
+  Order            Order[]
+  Strategy         Strategy[]
+  DailyTradeReport DailyTradeReport[]
+}
+
+model Password {
+  hash   String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @unique
+}
+
+model Session {
+  id             String   @id @default(cuid())
+  expirationDate DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  // non-unique foreign key
+  @@index([userId])
+}
+
+model BrokerAccount {
+  id String @id @default(cuid())
+
+  broker          String
+  clientName      String
+  clientId        String
+  authToken       String
+  refreshToken    String
+  feedToken       String
+  isLoginRequired Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  signals          Signal[]
+  Order            Order[]
+  DailyTradeReport DailyTradeReport[]
+
+  @@unique([userId, clientId], name: "brokerAccountIdentifier")
+}
+
+model Order {
+  id String @id @default(cuid())
+
+  brokerOrderId       String
+  brokerUniqueOrderId String
+
+  qty        Int
+  pendingQty Int // pending shares
+  status     String // PENDING, CLOSED
+  type       OrderType // BUY, SELL
+
+  price      Decimal?
+  profitLoss Decimal?
+  brokrage   Decimal?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  signal   Signal @relation(fields: [signalId], references: [id])
+  signalId String
+
+  brokerAccount   BrokerAccount @relation(fields: [brokerAccountId], references: [id])
+  brokerAccountId String
+
+  @@unique([brokerOrderId, brokerUniqueOrderId], name: "orderIdentifier")
+}
+
+// strategy is the one that generates signals 
+// if you use trdingview than no stratagy required
+model Strategy {
+  id String @id @default(cuid())
+
+  name        String
+  description String
+  label       String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+}
+
+model Signal {
+  id String @id @default(cuid())
+
+  name        String
+  description String
+  label       String?
+
+  status SignalStatus @default(DRAFT) // DRAFT, ACTIVE, INACTIVE, ARCHIVED
+  type   String // DELIVERY, CARRYFORWARD, MARGIN, INTRADAY
+
+  exchange           Exchange
+  tickerSymbol       String
+  tickerSymbolToken  String
+  allocatedFund      Decimal
+  targetStopLossType TargetStopLossType //  POINTS or PERCENTAGE
+  takeProfitValue    Decimal
+  stopLossValue      Decimal
+  size               Int // how many shares to buy
+  pyramiding         Int                @default(1) // Maximum number of orders in same direction
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brokerAccounts BrokerAccount[]
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  Order  Order[]
+}
+
+model DailyTradeReport {
+  id          String   @id @default(cuid())
+  exchange    Exchange
+  symbol      String
+  totalTrades Int
+  totalBuy    Int
+  totalSell   Int
+  pnl         Decimal // pnl without borker fee and other charges (tax)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  brokerAccount   BrokerAccount @relation(fields: [brokerAccountId], references: [id])
+  brokerAccountId String
+}
+
+model Instrument {
+  token    String   @id
+  symbol   String
+  name     String
+  expiry   String?
+  type     String?
+  exchange Exchange
+}
+
+enum SignalStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum Exchange {
+  BSE
+  NSE
+  NFO
+  MCX
+  BFO
+  CDS
+  NCDEX
+  NCO
+}
+
+enum TargetStopLossType {
+  POINTS
+  PERCENTAGE
+}
+
+enum OrderType {
+  BUY
+  SELL
+}
