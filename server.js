@@ -3,8 +3,6 @@ import compression from 'compression'
 import express from 'express'
 import morgan from 'morgan'
 
-console.log(process.env.DATABASE_URL)
-
 const viteDevServer =
   process.env.NODE_ENV === 'production'
     ? undefined
