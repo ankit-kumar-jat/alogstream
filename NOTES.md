@@ -1,3 +1,5 @@
 - only accept webhook/signal calls in market open time
 - stop accepting webhook signal calls 5 min before market closes
 - run chorn job 4 min before market close to close all pending prders
+- `Trading cost = Brokerage + Securities transaction tax + Stamp duty + other charges`
+- `Brokerage = ((purchase market price + sell market price) x Quantity) 0.05%`

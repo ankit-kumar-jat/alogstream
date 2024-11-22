@@ -1,0 +1,58 @@
+services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - '--providers.docker'
+      - '--providers.docker.exposedbydefault=false'
+      - '--entryPoints.websecure.address=:443'
+      - '--certificatesresolvers.myresolver.acme.tlschallenge=true'
+      - '--certificatesresolvers.myresolver.acme.email=mohit@algostream.site'
+      - '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json'
+      - '--entrypoints.web.address=:80'
+      - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
+      - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
+    ports:
+      - mode: host
+        protocol: tcp
+        published: 80
+        target: 80
+      - mode: host
+        protocol: tcp
+        published: 443
+        target: 443
+    volumes:
+      - letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  web:
+    image: ghcr.io/ankit-kumar-jat/alogstream:${GIT_COMMIT_HASH:-latest}
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.services.web.loadbalancer.server.port=3000'
+      - 'traefik.http.routers.web.rule=Host(`algostream.site`)'
+      - 'traefik.http.routers.web.entrypoints=websecure'
+      - 'traefik.http.routers.web.tls.certresolver=myresolver'
+    secrets:
+      - db-url
+      - session-secret
+      - api-key
+    environment:
+      - SESSION_SECRET=/run/secrets/session-secret
+      - HONEYPOT_SECRET=/run/secrets/session-secret
+      - DATABASE_URL=/run/secrets/db-url
+      - API_KEY=/run/secrets/api-key
+    deploy:
+      update_config:
+        order: start-first
+
+volumes:
+  db-data:
+  letsencrypt:
+
+secrets:
+  db-url:
+    external: true
+  api-key:
+    external: true
+  session-secret:
+    external: true

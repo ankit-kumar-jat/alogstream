@@ -58,7 +58,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
         }
       })
         .superRefine(async (data, ctx) => {
-          if (data.inviteCode !== process.env.INVITE_CODE) {
+          if (data.inviteCode !== 'WELCOMETOAS') {
             ctx.addIssue({
               path: ['inviteCode'],
               code: z.ZodIssueCode.custom,
