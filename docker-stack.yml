@@ -5,9 +5,6 @@ services:
       - '--providers.docker'
       - '--providers.docker.exposedbydefault=false'
       - '--entryPoints.websecure.address=:443'
-      - '--certificatesresolvers.myresolver.acme.tlschallenge=true'
-      - '--certificatesresolvers.myresolver.acme.email=mohit@algostream.site'
-      - '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json'
       - '--entrypoints.web.address=:80'
       - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
       - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
@@ -29,24 +26,23 @@ services:
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.services.web.loadbalancer.server.port=3000'
-      - 'traefik.http.routers.web.rule=Host(`algostream.site`)'
+      - 'traefik.http.routers.web.rule=Host(`3.110.54.15`)'
       - 'traefik.http.routers.web.entrypoints=websecure'
-      - 'traefik.http.routers.web.tls.certresolver=myresolver'
+      - 'traefik.http.routers.web.tls.certresolver=lets-encrypt'
     secrets:
       - db-url
       - session-secret
       - api-key
     environment:
-      - SESSION_SECRET=/run/secrets/session-secret
-      - HONEYPOT_SECRET=/run/secrets/session-secret
-      - DATABASE_URL=/run/secrets/db-url
-      - API_KEY=/run/secrets/api-key
+      - SESSION_SECRET_FILE=/run/secrets/session-secret
+      - HONEYPOT_SECRET_FILE=/run/secrets/session-secret
+      - DATABASE_URL_FILE=/run/secrets/db-url
+      - API_KEY_FILE=/run/secrets/api-key
     deploy:
       update_config:
         order: start-first
 
 volumes:
-  db-data:
   letsencrypt:
 
 secrets:
