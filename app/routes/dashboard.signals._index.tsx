@@ -17,6 +17,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return {
     signals: signals.map(signal => ({
       ...signal,
+      allocatedFund: signal.allocatedFund.toString(),
       takeProfitValue: signal.takeProfitValue.toString(),
       stopLossValue: signal.stopLossValue.toString(),
     })),

@@ -1,9 +1,11 @@
-import type { LoaderFunctionArgs } from '@remix-run/node'
+import { SignalStatus } from '@prisma/client'
+import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node'
 import { data } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
 import { Button } from '~/components/ui/button'
 import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
+import { isIn } from '~/lib/utils'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const userId = await requireUserId(request)
@@ -21,10 +23,35 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   return {
     signal: {
       ...signal,
+      allocatedFund: signal.allocatedFund.toString(),
       takeProfitValue: signal.takeProfitValue.toString(),
       stopLossValue: signal.stopLossValue.toString(),
     },
   }
+}
+
+export async function action({ request, params }: ActionFunctionArgs) {
+  const userId = await requireUserId(request)
+  const { id } = params
+
+  if (request.method === 'PUT') {
+    const formData = await request.formData()
+
+    const status = formData.get('status')
+    if (isIn(Object.values(SignalStatus), status)) {
+      await db.signal.update({ where: { id, userId }, data: { status } })
+      return { success: true }
+    }
+
+    return { success: false }
+  }
+
+  if (request.method === 'DELETE') {
+    await db.signal.delete({ where: { id, userId } })
+    return { success: true }
+  }
+
+  return { success: true }
 }
 
 export default function TradeSignals() {

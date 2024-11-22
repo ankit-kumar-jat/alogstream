@@ -1,31 +1,33 @@
 import {
+  AngleoneLTPRes,
   AngleoneOrder,
   AngleonePlaceOrderRes,
   AngleoneScrip,
   AngleoneTrade,
+  Exchange,
+  OrderDuration,
+  OrderType,
+  OrderVariety,
+  ProductType,
+  TxnType,
 } from '~/types/angleone'
 import { fetchClient } from './fetch-client.server'
-
-type OrderVariety = 'NORMAL' | 'STOPLOSS' | 'AMO' | 'ROBO'
-type TxnType = 'BUY' | 'SELL'
-type exchange = 'NSE' | 'BSE'
-type orderType = 'MARKET' | 'LIMIT' | 'STOPLOSS_LIMIT' | 'STOPLOSS_MARKET'
-type productType = 'DELIVERY' | 'INTRADAY' | 'CARRYFORWARD' | 'MARGIN' | 'BO'
-type orderDuration = 'DAY' | 'IOC'
 
 interface PlaceOrderReq {
   variety: OrderVariety
   tradingsymbol: string
   symboltoken: string
   transactiontype: TxnType
-  exchange: exchange
-  ordertype: orderType
-  producttype: productType
-  duration: orderDuration
-  price?: string
-  squareoff?: string
-  stoploss?: string
-  quantity: string
+  exchange: Exchange
+  ordertype: OrderType
+  producttype: ProductType
+  duration: OrderDuration
+  price: number
+  squareoff: number
+  stoploss: number
+  triggerprice: number
+  quantity: number
+  ordertag?: string
 }
 
 export async function placeOrder({
@@ -72,6 +74,34 @@ export async function getTradeBook({ authToken }: { authToken: string }) {
     endpoint: '/rest/secure/angelbroking/order/v1/getTradeBook',
     authToken,
   })
+
+  return orderBookData.data
+}
+
+export async function getLTPData({
+  authToken,
+  exchange,
+  symbol,
+  symbolToken,
+}: {
+  authToken: string
+  exchange: Exchange
+  symbol: string
+  symbolToken: string
+}) {
+  const orderBookData = await fetchClient<AngleoneLTPRes>(
+    {
+      endpoint: '/rest/secure/angelbroking/order/v1/getLtpData',
+      authToken,
+    },
+    {
+      body: JSON.stringify({
+        exchange,
+        tradingsymbol: symbol,
+        symboltoken: symbolToken,
+      }),
+    },
+  )
 
   return orderBookData.data
 }

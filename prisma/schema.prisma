@@ -22,12 +22,13 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  password      Password?
-  sessions      Session[]
-  BrokerAccount BrokerAccount[]
-  Signal        Signal[]
-  Order         Order[]
-  Strategy      Strategy[]
+  password         Password?
+  sessions         Session[]
+  BrokerAccount    BrokerAccount[]
+  Signal           Signal[]
+  Order            Order[]
+  Strategy         Strategy[]
+  DailyTradeReport DailyTradeReport[]
 }
 
 model Password {
@@ -55,7 +56,7 @@ model BrokerAccount {
 
   broker          String
   clientName      String
-  clientId        String  @unique
+  clientId        String
   authToken       String
   refreshToken    String
   feedToken       String
@@ -67,23 +68,27 @@ model BrokerAccount {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
-  signals Signal[]
-  Order   Order[]
+  signals          Signal[]
+  Order            Order[]
+  DailyTradeReport DailyTradeReport[]
+
+  @@unique([userId, clientId], name: "brokerAccountIdentifier")
 }
 
 model Order {
   id String @id @default(cuid())
 
-  brokerOrderId String
+  brokerOrderId       String
+  brokerUniqueOrderId String
 
   qty        Int
   pendingQty Int // pending shares
   status     String // PENDING, CLOSED
-  type       String // BUY, SELL
+  type       OrderType // BUY, SELL
 
-  price      Decimal
-  profitLoss Decimal
-  brokrage   Decimal
+  price      Decimal?
+  profitLoss Decimal?
+  brokrage   Decimal?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -96,6 +101,8 @@ model Order {
 
   brokerAccount   BrokerAccount @relation(fields: [brokerAccountId], references: [id])
   brokerAccountId String
+
+  @@unique([brokerOrderId, brokerUniqueOrderId], name: "orderIdentifier")
 }
 
 // strategy is the one that generates signals 
@@ -127,9 +134,12 @@ model Signal {
   exchange           Exchange
   tickerSymbol       String
   tickerSymbolToken  String
-  targetStopLossType String //  ABSOLUTE/POINTS or PERCENTAGE
+  allocatedFund      Decimal
+  targetStopLossType TargetStopLossType //  POINTS or PERCENTAGE
   takeProfitValue    Decimal
   stopLossValue      Decimal
+  size               Int // how many shares to buy
+  pyramiding         Int                @default(1) // Maximum number of orders in same direction
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -139,6 +149,22 @@ model Signal {
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
   Order  Order[]
+}
+
+model DailyTradeReport {
+  id          String   @id @default(cuid())
+  exchange    Exchange
+  symbol      String
+  totalTrades Int
+  totalBuy    Int
+  totalSell   Int
+  pnl         Decimal // pnl without borker fee and other charges (tax)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  brokerAccount   BrokerAccount @relation(fields: [brokerAccountId], references: [id])
+  brokerAccountId String
 }
 
 model Instrument {
@@ -164,4 +190,16 @@ enum Exchange {
   MCX
   BFO
   CDS
+  NCDEX
+  NCO
+}
+
+enum TargetStopLossType {
+  POINTS
+  PERCENTAGE
+}
+
+enum OrderType {
+  BUY
+  SELL
 }

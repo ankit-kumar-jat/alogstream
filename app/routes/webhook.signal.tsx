@@ -1,6 +1,8 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import { data } from '@remix-run/node'
+import type { ActionFunctionArgs } from '@remix-run/node'
+import { data, json } from '@remix-run/node'
 import { z } from 'zod'
+
+import { processOrder } from '~/lib/broker/process-order.server'
 import { db } from '~/lib/db.server'
 
 // Instructions to add signal
@@ -50,41 +52,64 @@ import { db } from '~/lib/db.server'
 
 const SignalSchema = z.object({
   txnType: z.enum(['BUY', 'SELL']),
-  quantity: z.number(),
-  stoploss: z.number(),
-  target: z.number(),
 })
 
 export async function action({ request }: ActionFunctionArgs) {
   const url = new URL(request.url)
   const key = url.searchParams.get('key')
-  // TODO: validate key before any action
 
   if (!key) {
-    return data({ success: false, message: 'Invalid api key' }, { status: 401 })
+    return json({ success: false, message: 'Invalid api key' }, { status: 401 })
   }
 
   const signal = await db.signal.findUnique({
     where: { id: key },
+    include: {
+      brokerAccounts: {
+        select: { id: true },
+      },
+    },
   })
 
   if (!signal) {
-    return data({ success: false, message: 'Invalid api key' }, { status: 401 })
+    return json({ success: false, message: 'Invalid api key' }, { status: 401 })
   }
 
-  const formData = await request.formData()
-  console.log('🚀 ~ action ~ formData:', formData.get('action'))
+  if (signal)
+    if (signal.status !== 'ACTIVE') {
+      // Ignore status to
+      return data({ success: true }, { status: 200 })
+    }
 
-  // const data = {
-  //   symbol: 'LT',
-  //   symbolToken: '1030',
-  //   exchange: 'NSE',
-  //   txnType: 'BUY', // BUY or SELL
-  //   quantity: '1',
-  //   price: '222.82', // just for refrence
-  //   stoploss: '218',
-  //   target: '235', // take profit
-  // }
+  const formPayload = await request.json()
+  const parsed = await SignalSchema.safeParseAsync(formPayload)
 
-  return {}
+  if (!parsed.success) {
+    return json(
+      {
+        success: false,
+        message: 'Invalid payload',
+        error: parsed.error.format(),
+      },
+      { status: 400 },
+    )
+  }
+
+  signal.brokerAccounts.map(async ({ id }) =>
+    processOrder({
+      brokerAccountId: id,
+      userId: signal.userId,
+      signalId: signal.id,
+      txnType: parsed.data.txnType,
+      exchange: signal.exchange,
+      qty: signal.size,
+      stopLoss: signal.stopLossValue.toNumber(),
+      target: signal.takeProfitValue.toNumber(),
+      symbol: signal.tickerSymbol,
+      symbolToken: signal.tickerSymbolToken,
+      targetStopLossType: signal.targetStopLossType,
+    }),
+  )
+
+  return json({ success: true }, { status: 200 })
 }

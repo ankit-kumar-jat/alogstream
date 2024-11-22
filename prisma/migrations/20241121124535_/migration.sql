@@ -2,7 +2,13 @@
 CREATE TYPE "SignalStatus" AS ENUM ('DRAFT', 'ACTIVE', 'INACTIVE', 'ARCHIVED');
 
 -- CreateEnum
-CREATE TYPE "Exchange" AS ENUM ('BSE', 'NSE', 'NFO', 'MCX', 'BFO', 'CDS');
+CREATE TYPE "Exchange" AS ENUM ('BSE', 'NSE', 'NFO', 'MCX', 'BFO', 'CDS', 'NCDEX', 'NCO');
+
+-- CreateEnum
+CREATE TYPE "TargetStopLossType" AS ENUM ('POINTS', 'PERCENTAGE');
+
+-- CreateEnum
+CREATE TYPE "OrderType" AS ENUM ('BUY', 'SELL');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -54,13 +60,14 @@ CREATE TABLE "BrokerAccount" (
 CREATE TABLE "Order" (
     "id" TEXT NOT NULL,
     "brokerOrderId" TEXT NOT NULL,
+    "brokerUniqueOrderId" TEXT NOT NULL,
     "qty" INTEGER NOT NULL,
     "pendingQty" INTEGER NOT NULL,
     "status" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
-    "price" DECIMAL(65,30) NOT NULL,
-    "profitLoss" DECIMAL(65,30) NOT NULL,
-    "brokrage" DECIMAL(65,30) NOT NULL,
+    "type" "OrderType" NOT NULL,
+    "price" DECIMAL(65,30),
+    "profitLoss" DECIMAL(65,30),
+    "brokrage" DECIMAL(65,30),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "userId" TEXT NOT NULL,
@@ -94,14 +101,32 @@ CREATE TABLE "Signal" (
     "exchange" "Exchange" NOT NULL,
     "tickerSymbol" TEXT NOT NULL,
     "tickerSymbolToken" TEXT NOT NULL,
-    "targetStopLossType" TEXT NOT NULL,
+    "allocatedFund" DECIMAL(65,30) NOT NULL,
+    "targetStopLossType" "TargetStopLossType" NOT NULL,
     "takeProfitValue" DECIMAL(65,30) NOT NULL,
     "stopLossValue" DECIMAL(65,30) NOT NULL,
+    "size" INTEGER NOT NULL,
+    "pyramiding" INTEGER NOT NULL DEFAULT 1,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "userId" TEXT NOT NULL,
 
     CONSTRAINT "Signal_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "DailyTradeReport" (
+    "id" TEXT NOT NULL,
+    "exchange" "Exchange" NOT NULL,
+    "symbol" TEXT NOT NULL,
+    "totalTrades" INTEGER NOT NULL,
+    "totalBuy" INTEGER NOT NULL,
+    "totalSell" INTEGER NOT NULL,
+    "pnl" DECIMAL(65,30) NOT NULL,
+    "userId" TEXT NOT NULL,
+    "brokerAccountId" TEXT NOT NULL,
+
+    CONSTRAINT "DailyTradeReport_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -132,7 +157,10 @@ CREATE UNIQUE INDEX "Password_userId_key" ON "Password"("userId");
 CREATE INDEX "Session_userId_idx" ON "Session"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "BrokerAccount_clientId_key" ON "BrokerAccount"("clientId");
+CREATE UNIQUE INDEX "BrokerAccount_userId_clientId_key" ON "BrokerAccount"("userId", "clientId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Order_brokerOrderId_brokerUniqueOrderId_key" ON "Order"("brokerOrderId", "brokerUniqueOrderId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_BrokerAccountToSignal_AB_unique" ON "_BrokerAccountToSignal"("A", "B");
@@ -163,6 +191,12 @@ ALTER TABLE "Strategy" ADD CONSTRAINT "Strategy_userId_fkey" FOREIGN KEY ("userI
 
 -- AddForeignKey
 ALTER TABLE "Signal" ADD CONSTRAINT "Signal_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DailyTradeReport" ADD CONSTRAINT "DailyTradeReport_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DailyTradeReport" ADD CONSTRAINT "DailyTradeReport_brokerAccountId_fkey" FOREIGN KEY ("brokerAccountId") REFERENCES "BrokerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_BrokerAccountToSignal" ADD CONSTRAINT "_BrokerAccountToSignal_A_fkey" FOREIGN KEY ("A") REFERENCES "BrokerAccount"("id") ON DELETE CASCADE ON UPDATE CASCADE;

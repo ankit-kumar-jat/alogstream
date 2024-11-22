@@ -23,7 +23,6 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table'
-import { DataTableToolbar } from './signals-table-toolbar'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -66,7 +65,7 @@ function SignalsTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <DataTableToolbar table={table} />
+      {/* <DataTableToolbar table={table} /> */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>

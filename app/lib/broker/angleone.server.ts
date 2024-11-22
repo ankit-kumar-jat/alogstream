@@ -95,15 +95,16 @@ export async function login({
   }
 
   const existingAccount = await db.brokerAccount.findUnique({
-    where: { userId: userId, clientId: profile.clientcode },
+    where: {
+      brokerAccountIdentifier: { userId: userId, clientId: profile.clientcode },
+    },
     select: { id: true },
   })
 
   if (existingAccount) {
     const brokerAccount = await db.brokerAccount.update({
       where: {
-        userId,
-        clientId: profile.clientcode,
+        brokerAccountIdentifier: { userId, clientId: profile.clientcode },
       },
       data: {
         broker: 'ANGLEONE',

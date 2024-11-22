@@ -6,6 +6,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function isIn<T>(values: readonly T[], x: any): x is T {
+  return values.includes(x)
+}
+
+/**
+ * Simple debounce implementation
+ */
+export function debounce<
+  Callback extends (...args: Parameters<Callback>) => void,
+>(fn: Callback, delay: number) {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  return (...args: Parameters<Callback>) => {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => {
+      fn(...args)
+    }, delay)
+  }
+}
+
 /**
  * Merge multiple headers objects into one (uses set so headers are overridden)
  */

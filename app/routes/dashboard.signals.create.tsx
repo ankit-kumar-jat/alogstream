@@ -31,6 +31,7 @@ import {
 } from '~/components/ui/select'
 import { getToken } from '~/lib/broker/angleone.server'
 import { getSymbolToken } from '~/lib/broker/order.server'
+import { InstrumentSelect } from './resources.search-instrument'
 
 const SignalFormSchema = z.object({
   name: z.string(),
@@ -42,6 +43,8 @@ const SignalFormSchema = z.object({
   // targetStopLossType: z.string(),
   takeProfitValue: z.number(),
   stopLossValue: z.number(),
+  allocatedFund: z.number(),
+  size: z.number(), //order size
   brokerAccounts: z.array(z.string().cuid2()),
 })
 
@@ -69,7 +72,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
     { title: 'BSE', value: 'BSE' },
   ]
 
-  return { signal, brokerAccounts, exchangeOptions }
+  return {
+    signal: signal
+      ? {
+          ...signal,
+          allocatedFund: signal.allocatedFund.toString(),
+          takeProfitValue: signal.takeProfitValue.toString(),
+          stopLossValue: signal.stopLossValue.toString(),
+        }
+      : null,
+    brokerAccounts,
+    exchangeOptions,
+  }
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -88,11 +102,12 @@ export async function action({ request }: ActionFunctionArgs) {
   const {
     name,
     description,
-    exchange,
     symbol,
     stopLossValue,
     brokerAccounts,
     takeProfitValue,
+    allocatedFund,
+    size,
   } = submission.value
 
   const { data: token, error } = await getToken({
@@ -111,10 +126,8 @@ export async function action({ request }: ActionFunctionArgs) {
     )
   }
 
-  const symbolDetails = await getSymbolToken({
-    authToken: token.authToken,
-    symbol: symbol.toUpperCase(),
-    exchange,
+  const symbolDetails = await db.instrument.findUnique({
+    where: { token: symbol },
   })
 
   if (!symbolDetails) {
@@ -132,14 +145,16 @@ export async function action({ request }: ActionFunctionArgs) {
     data: {
       name,
       description,
-      exchange,
-      tickerSymbol: symbolDetails.tradingsymbol,
-      tickerSymbolToken: symbolDetails.symboltoken,
+      exchange: symbolDetails.exchange,
+      tickerSymbol: symbolDetails.symbol,
+      tickerSymbolToken: symbolDetails.token,
       type: 'INTRADAY',
       stopLossValue,
-      targetStopLossType: 'PERCENTAGE',
+      targetStopLossType: 'POINTS',
       takeProfitValue,
       userId,
+      allocatedFund,
+      size,
       brokerAccounts: {
         connect: brokerAccounts.map(id => ({ id })),
       },
@@ -168,6 +183,7 @@ export default function TradeSignals() {
   })
 
   const exchangeSelectControl = useInputControl(fields.exchange)
+  const symbolSelectControl = useInputControl(fields.symbol)
 
   return (
     <div className="container mx-auto my-10 max-w-3xl space-y-4 px-4">
@@ -211,8 +227,35 @@ export default function TradeSignals() {
               </SelectContent>
             </Select>
           </FormField>
+          <FormField
+            labelProps={{ children: 'Stock Symbol' }}
+            errors={fields.symbol.errors}
+            inputId={fields.symbol.id}
+          >
+            <InstrumentSelect
+              exchange="NSE"
+              value={symbolSelectControl.value}
+              setValue={symbolSelectControl.change}
+            />
+          </FormField>
           <InputField
-            labelProps={{ children: 'Stop Loss (Percentage)' }}
+            labelProps={{ children: 'Allocated Fund' }}
+            inputProps={{
+              ...getInputProps(fields.allocatedFund, { type: 'number' }),
+              autoCapitalize: 'none',
+            }}
+            errors={fields.allocatedFund.errors}
+          />
+          <InputField
+            labelProps={{ children: 'Order Size' }}
+            inputProps={{
+              ...getInputProps(fields.size, { type: 'number' }),
+              autoCapitalize: 'none',
+            }}
+            errors={fields.size.errors}
+          />
+          <InputField
+            labelProps={{ children: 'Stop Loss (Points)' }}
             inputProps={{
               ...getInputProps(fields.stopLossValue, { type: 'number' }),
               autoCapitalize: 'none',
@@ -220,21 +263,14 @@ export default function TradeSignals() {
             errors={fields.stopLossValue.errors}
           />
           <InputField
-            labelProps={{ children: 'Take Profit (Percentage)' }}
+            labelProps={{ children: 'Take Profit (Points)' }}
             inputProps={{
               ...getInputProps(fields.takeProfitValue, { type: 'number' }),
               autoCapitalize: 'none',
             }}
             errors={fields.takeProfitValue.errors}
           />
-          <InputField
-            labelProps={{ children: 'Stock Symbol' }}
-            inputProps={{
-              ...getInputProps(fields.symbol, { type: 'text' }),
-              autoCapitalize: 'none',
-            }}
-            errors={fields.symbol.errors}
-          />
+
           <TextareaField
             labelProps={{ children: 'Description' }}
             textareaProps={{
@@ -243,6 +279,7 @@ export default function TradeSignals() {
             }}
             errors={fields.description.errors}
           />
+
           <div>
             <fieldset {...getFieldsetProps(fields.brokerAccounts)}>
               <legend>Please select broker Accounts</legend>

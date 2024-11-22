@@ -5,14 +5,17 @@ import { DataTableColumnHeader } from './signals-table-column-header'
 import { DataTableRowActions } from './signals-table-row-actions'
 import { statuses } from './signals-table-toolbar'
 import { Link } from '@remix-run/react'
+import { Dialog } from '@radix-ui/react-dialog'
 
 interface ModifiedSignal
-  extends Omit<Signal, 'stopLossValue' | 'takeProfitValue'> {
+  extends Omit<Signal, 'stopLossValue' | 'takeProfitValue' | 'allocatedFund'> {
   stopLossValue: string
   takeProfitValue: string
+  allocatedFund: string
 }
 
 export const columns: ColumnDef<ModifiedSignal>[] = [
+  { accessorKey: 'id' },
   {
     accessorKey: 'name',
     header: ({ column }) => (
@@ -54,7 +57,7 @@ export const columns: ColumnDef<ModifiedSignal>[] = [
   {
     accessorKey: 'takeProfitValue',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Take Profit" />
+      <DataTableColumnHeader column={column} title="Target" />
     ),
     cell: ({ row }) => (
       <div className="w-[80px]">{row.getValue('takeProfitValue')}</div>
