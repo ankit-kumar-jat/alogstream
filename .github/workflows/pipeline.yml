@@ -27,8 +27,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/dreamsofcode-io/zenstats:latest
-            ghcr.io/dreamsofcode-io/zenstats:${{ github.sha }}
+            ghcr.io/ankit-kumar-jat/alogstream:latest
+            ghcr.io/ankit-kumar-jat/alogstream:${{ github.sha }}
 
   deploy:
     runs-on: ubuntu-latest
