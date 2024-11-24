@@ -8,6 +8,9 @@ services:
       - '--entrypoints.web.address=:80'
       - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
       - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
+      - '--certificatesresolvers.myresolver.acme.tlschallenge=true'
+      - '--certificatesresolvers.myresolver.acme.email=mohit@algostream.site'
+      - '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json'
     ports:
       - mode: host
         protocol: tcp
@@ -17,6 +20,7 @@ services:
         protocol: tcp
         published: 443
         target: 443
+      - 8080:8080 # traefik Dashbaord WebGui
     volumes:
       - letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock
@@ -26,9 +30,9 @@ services:
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.services.web.loadbalancer.server.port=3000'
-      - 'traefik.http.routers.web.rule=Host(${HOST})'
+      - 'traefik.http.routers.web.rule=Host(`${HOST}`)'
       - 'traefik.http.routers.web.entrypoints=websecure'
-      - 'traefik.http.routers.web.tls.certresolver=lets-encrypt'
+      - 'traefik.http.routers.web.tls.certresolver=myresolver'
 
     environment:
       - SESSION_SECRET=${SESSION_SECRET}
