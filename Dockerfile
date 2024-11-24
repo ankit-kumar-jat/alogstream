@@ -4,14 +4,6 @@ FROM node:22-alpine AS base
 # set for base and all layer that inherit from it
 ENV NODE_ENV=production
 
-RUN --mount=type=secret,id=session-secret \
-    --mount=type=secret,id=db-url \
-    --mount=type=secret,id=api-key \
-    export SESSION_SECRET=$(cat /run/secrets/session-secret) && \
-    export HONEYPOT_SECRET=$(cat /run/secrets/session-secret) && \
-    export DATABASE_URL=$(cat /run/secrets/db-url) && \
-    export API_KEY=$(cat /run/secrets/api-key)
-
 # Install all node_modules, including dev dependencies
 FROM base AS deps
 

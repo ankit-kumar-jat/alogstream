@@ -40,7 +40,12 @@ jobs:
 
       - name: create env file
         run: |
-          echo "GIT_COMMIT_HASH=${{ github.sha }}" >> ./envfile
+          echo "GIT_COMMIT_HASH=${{ github.sha }}" >> ./envfile 
+          echo "SESSION_SECRET=${{ secrets.SESSION_SECRET }}" >> ./envfile
+          echo "HONEYPOT_SECRET=${{ secrets.HONEYPOT_SECRET }}" >> ./envfile
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> ./envfile
+          echo "API_KEY=${{ secrets.API_KEY }}" >> ./envfile
+          echo "HOST=${{ vars.HOST }}" >> ./envfile
 
       - name: Docker Stack Deploy
         uses: cssnr/stack-deploy-action@v1
