@@ -52,7 +52,7 @@ jobs:
         with:
           name: algostream
           file: docker-stack.yaml
-          host: algostream.site
+          host: ${{ vars.HOST }}
           user: deploy
           ssh_key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
           env_file: ./envfile
