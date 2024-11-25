@@ -9,7 +9,6 @@ import { isIn } from '~/lib/utils'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const userId = await requireUserId(request)
-
   const { id } = params
 
   const signal = await db.signal.findUnique({
@@ -20,12 +19,18 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     return data({ signal: null }, { status: 404 })
   }
 
+  const url = new URL(request.url)
+  const webhookURL = `https://${url.hostname}/webhook/signal?key=${signal.id}`
+  const webhookPayload = `{"txnType": "{{strategy.order.action}}"}`
+
   return {
     signal: {
       ...signal,
       allocatedFund: signal.allocatedFund.toString(),
       takeProfitValue: signal.takeProfitValue.toString(),
       stopLossValue: signal.stopLossValue.toString(),
+      webhookURL,
+      webhookPayload,
     },
   }
 }

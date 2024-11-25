@@ -31,7 +31,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   })
 
   const isBrokerAccountIdExists = brokerAccountId
-    ? Boolean(brokerAccounts.find(acc => acc.id == brokerAccountId))
+    ? Boolean(brokerAccounts?.find(acc => acc.id == brokerAccountId))
     : true
 
   if (!brokerAccounts.length || !isBrokerAccountIdExists) {

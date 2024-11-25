@@ -47,7 +47,7 @@ export async function processOrder({
     throw new Error('Unable to fetch created order.')
   }
 
-  const price = parseFloat(ltpData.close)
+  const price = parseFloat(ltpData.ltp)
 
   const { targetPrice, stopLossPrice } = calculateTargetAndStoplossPrice({
     price,
@@ -114,5 +114,5 @@ function calculateTargetAndStoplossPrice({
     return { targetPrice, stopLossPrice }
   }
 
-  return { targetPrice: price + target, stopLossPrice: price + stopLoss }
+  return { targetPrice: target, stopLossPrice: stopLoss }
 }

@@ -61,7 +61,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
   )
   authSession.set(sessionKey, session.id)
 
-  return redirect(safeRedirect(redirectTo), {
+  return redirect(safeRedirect(redirectTo, '/dashboard'), {
     headers: {
       'set-cookie': await authSessionStorage.commitSession(authSession, {
         expires: session.expirationDate,

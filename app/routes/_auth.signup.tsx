@@ -99,7 +99,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
     }),
   )
 
-  return redirect(safeRedirect(redirectTo), { headers })
+  return redirect(safeRedirect(redirectTo, '/dashboard'), { headers })
 }
 
 export default function Signup() {
