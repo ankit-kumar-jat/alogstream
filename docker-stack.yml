@@ -25,7 +25,7 @@ services:
         published: 8080
         target: 8080
     volumes:
-      - ./letsencrypt:/letsencrypt
+      - letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock
 
   web:
