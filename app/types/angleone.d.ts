@@ -94,6 +94,47 @@ export interface AngleoneTrade {
   filltime: string
 }
 
+export interface AngleonePosition {
+  exchange: Exchange
+  symboltoken: string
+  producttype: string
+  tradingsymbol: string
+  symbolname: string
+  instrumenttype: string
+  priceden: string
+  pricenum: string
+  genden: string
+  gennum: string
+  precision: string
+  multiplier: string
+  boardlotsize: string
+  buyqty: string
+  sellqty: string
+  buyamount: string
+  sellamount: string
+  symbolgroup: string
+  strikeprice: string
+  optiontype: string
+  expirydate: string
+  lotsize: string
+  cfbuyqty: string
+  cfsellqty: string
+  cfbuyamount: string
+  cfsellamount: string
+  buyavgprice: string
+  sellavgprice: string
+  avgnetprice: string
+  netvalue: string
+  netqty: string
+  totalbuyvalue: string
+  totalsellvalue: string
+  cfbuyavgprice: string
+  cfsellavgprice: string
+  totalbuyavgprice: string
+  totalsellavgprice: string
+  netprice: string
+}
+
 export interface AngleoneLTPRes {
   exchange: string
   tradingsymbol: string

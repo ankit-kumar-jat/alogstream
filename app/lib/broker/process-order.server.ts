@@ -3,6 +3,7 @@ import { db } from '~/lib/db.server'
 import { getLTPData, placeOrder } from './order.server'
 import type { TxnType } from '~/types/angleone'
 import type { Exchange, TargetStopLossType } from '@prisma/client'
+import { getPositions } from './portfolio.server'
 
 interface ProcessOrderOptions {
   brokerAccountId: string
@@ -34,6 +35,19 @@ export async function processOrder({
   const { data: tokens, error } = await getToken({ brokerAccountId, userId })
   if (error || !tokens) {
     throw new Error('Unable to fetch token.')
+  }
+
+  const positions = await getPositions({ authToken: tokens.authToken })
+
+  const isPendingTrade = positions?.find(position => {
+    return (
+      position.symboltoken === symbolToken &&
+      position.sellqty !== position.buyqty
+    )
+  })
+
+  if (isPendingTrade) {
+    return null
   }
 
   const ltpData = await getLTPData({

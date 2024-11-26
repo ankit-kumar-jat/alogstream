@@ -96,10 +96,10 @@ model Order {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
-  signal   Signal @relation(fields: [signalId], references: [id])
+  signal   Signal @relation(fields: [signalId], references: [id], onDelete: Cascade)
   signalId String
 
-  brokerAccount   BrokerAccount @relation(fields: [brokerAccountId], references: [id])
+  brokerAccount   BrokerAccount @relation(fields: [brokerAccountId], references: [id], onDelete: Cascade)
   brokerAccountId String
 
   @@unique([brokerOrderId, brokerUniqueOrderId], name: "orderIdentifier")

@@ -1,4 +1,4 @@
-import { AngleoneTrade } from '~/types/angleone'
+import { AngleonePosition, AngleoneTrade } from '~/types/angleone'
 import { fetchClient } from './fetch-client.server'
 
 export async function getAllHoldings({ authToken }: { authToken: string }) {
@@ -11,7 +11,7 @@ export async function getAllHoldings({ authToken }: { authToken: string }) {
 }
 
 export async function getPositions({ authToken }: { authToken: string }) {
-  const orderBookData = await fetchClient<AngleoneTrade[]>({
+  const orderBookData = await fetchClient<AngleonePosition[]>({
     endpoint: '/rest/secure/angelbroking/order/v1/getPosition',
     authToken,
   })

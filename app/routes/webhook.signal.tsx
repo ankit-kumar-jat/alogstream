@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from '@remix-run/node'
 import { data, json } from '@remix-run/node'
 import { z } from 'zod'
+import { retryAsync } from 'ts-retry'
 
 import { processOrder } from '~/lib/broker/process-order.server'
 import { db } from '~/lib/db.server'
@@ -95,20 +96,26 @@ export async function action({ request }: ActionFunctionArgs) {
     )
   }
 
-  signal.brokerAccounts.map(async ({ id }) =>
-    processOrder({
-      brokerAccountId: id,
-      userId: signal.userId,
-      signalId: signal.id,
-      txnType: parsed.data.txnType,
-      exchange: signal.exchange,
-      qty: signal.size,
-      stopLoss: signal.stopLossValue.toNumber(),
-      target: signal.takeProfitValue.toNumber(),
-      symbol: signal.tickerSymbol,
-      symbolToken: signal.tickerSymbolToken,
-      targetStopLossType: signal.targetStopLossType,
-    }),
+  signal.brokerAccounts.map(
+    async ({ id }) =>
+      await retryAsync(
+        async () => {
+          await processOrder({
+            brokerAccountId: id,
+            userId: signal.userId,
+            signalId: signal.id,
+            txnType: parsed.data.txnType,
+            exchange: signal.exchange,
+            qty: signal.size,
+            stopLoss: signal.stopLossValue.toNumber(),
+            target: signal.takeProfitValue.toNumber(),
+            symbol: signal.tickerSymbol,
+            symbolToken: signal.tickerSymbolToken,
+            targetStopLossType: signal.targetStopLossType,
+          })
+        },
+        { delay: 1000, maxTry: 2 },
+      ),
   )
 
   return json({ success: true }, { status: 200 })
