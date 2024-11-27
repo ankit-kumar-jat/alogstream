@@ -45,7 +45,7 @@ jobs:
           echo "HONEYPOT_SECRET=${{ secrets.HONEYPOT_SECRET }}" >> ./envfile
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> ./envfile
           echo "API_KEY=${{ secrets.API_KEY }}" >> ./envfile
-          echo "HOST=${{ vars.HOST }}" >> ./envfile
+          echo "HOST=${{ vars.HOSTNAME }}" >> ./envfile
 
       - name: Docker Stack Deploy
         uses: cssnr/stack-deploy-action@v1
