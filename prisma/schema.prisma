@@ -125,7 +125,7 @@ model Signal {
   id String @id @default(cuid())
 
   name        String
-  description String
+  description String?
   label       String?
 
   status SignalStatus @default(DRAFT) // DRAFT, ACTIVE, INACTIVE, ARCHIVED
@@ -155,10 +155,10 @@ model DailyTradeReport {
   id          String   @id @default(cuid())
   exchange    Exchange
   symbol      String
-  totalTrades Int
-  totalBuy    Int
-  totalSell   Int
-  pnl         Decimal // pnl without borker fee and other charges (tax)
+  symbolToken String
+  buyQty      Int
+  sellQty     Int
+  pnl         Decimal
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String

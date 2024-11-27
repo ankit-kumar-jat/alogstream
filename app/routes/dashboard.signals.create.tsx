@@ -32,19 +32,19 @@ import {
 import { getToken } from '~/lib/broker/angleone.server'
 import { getSymbolToken } from '~/lib/broker/order.server'
 import { InstrumentSelect } from './resources.search-instrument'
+import { Exchange } from '~/types/angleone'
 
 const SignalFormSchema = z.object({
   name: z.string(),
-  description: z.string(),
+  description: z.string().optional(),
   // label: z.string().optional(),
-  // type: z.string(),
-  exchange: z.enum(['NSE', 'BSE']),
+  exchange: z.enum(['NSE', 'BSE', 'NFO']),
   symbol: z.string(),
-  // targetStopLossType: z.string(),
-  takeProfitValue: z.number(),
-  stopLossValue: z.number(),
-  allocatedFund: z.number(),
-  size: z.number(), //order size
+  targetStopLossType: z.enum(['POINTS', 'PERCENTAGE']),
+  takeProfitValue: z.number().gt(0),
+  stopLossValue: z.number().gt(0),
+  // allocatedFund: z.number().gt(0),
+  size: z.number().gt(0), // order-size/lots
   brokerAccounts: z.array(z.string().cuid2()),
 })
 
@@ -70,6 +70,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const exchangeOptions = [
     { title: 'NSE', value: 'NSE' },
     { title: 'BSE', value: 'BSE' },
+    // { title: 'NFO', value: 'NFO' },
+  ]
+
+  const slTypeOptions = [
+    { title: 'Points', value: 'POINTS' },
+    { title: 'Percentage', value: 'PERCENTAGE' },
   ]
 
   return {
@@ -83,6 +89,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       : null,
     brokerAccounts,
     exchangeOptions,
+    slTypeOptions,
   }
 }
 
@@ -106,25 +113,9 @@ export async function action({ request }: ActionFunctionArgs) {
     stopLossValue,
     brokerAccounts,
     takeProfitValue,
-    allocatedFund,
+    targetStopLossType,
     size,
   } = submission.value
-
-  const { data: token, error } = await getToken({
-    userId,
-    brokerAccountId: brokerAccounts[0],
-  })
-
-  if (error || !token) {
-    return data(
-      {
-        result: submission.reply({
-          formErrors: ['Please relogin with your broker account first.'],
-        }),
-      },
-      { status: 400 },
-    )
-  }
 
   const symbolDetails = await db.instrument.findUnique({
     where: { token: symbol },
@@ -150,10 +141,10 @@ export async function action({ request }: ActionFunctionArgs) {
       tickerSymbolToken: symbolDetails.token,
       type: 'INTRADAY',
       stopLossValue,
-      targetStopLossType: 'POINTS',
+      targetStopLossType,
       takeProfitValue,
       userId,
-      allocatedFund,
+      allocatedFund: 0,
       size,
       brokerAccounts: {
         connect: brokerAccounts.map(id => ({ id })),
@@ -165,16 +156,15 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function TradeSignals() {
-  const { signal, exchangeOptions, brokerAccounts } =
+  const { signal, exchangeOptions, brokerAccounts, slTypeOptions } =
     useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
   const isPending = useIsPending()
-  console.log('🚀 ~ TradeSignals ~ actionData:', actionData)
 
   const [form, fields] = useForm({
     id: 'onboarding-form',
     constraint: getZodConstraint(SignalFormSchema),
-    defaultValue: { exchange: 'BSE' },
+    defaultValue: { exchange: 'NSE', targetStopLossType: 'POINTS' },
     lastResult: actionData?.result,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: SignalFormSchema })
@@ -183,6 +173,7 @@ export default function TradeSignals() {
   })
 
   const exchangeSelectControl = useInputControl(fields.exchange)
+  const slTypeSelectControl = useInputControl(fields.targetStopLossType)
   const symbolSelectControl = useInputControl(fields.symbol)
 
   return (
@@ -233,40 +224,61 @@ export default function TradeSignals() {
             inputId={fields.symbol.id}
           >
             <InstrumentSelect
-              exchange="NSE"
+              exchange={fields.exchange.value as Exchange}
               value={symbolSelectControl.value}
               setValue={symbolSelectControl.change}
             />
           </FormField>
           <InputField
-            labelProps={{ children: 'Allocated Fund' }}
-            inputProps={{
-              ...getInputProps(fields.allocatedFund, { type: 'number' }),
-              autoCapitalize: 'none',
-            }}
-            errors={fields.allocatedFund.errors}
-          />
-          <InputField
-            labelProps={{ children: 'Order Size' }}
+            labelProps={{ children: 'Order Size (Lots)' }}
             inputProps={{
               ...getInputProps(fields.size, { type: 'number' }),
               autoCapitalize: 'none',
             }}
             errors={fields.size.errors}
           />
+          <FormField
+            labelProps={{ children: 'SL Type' }}
+            errors={fields.targetStopLossType.errors}
+            inputId={fields.targetStopLossType.id}
+          >
+            <Select
+              onValueChange={slTypeSelectControl.change}
+              defaultValue={slTypeSelectControl.value}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select SL Type" />
+              </SelectTrigger>
+
+              <SelectContent>
+                {slTypeOptions.map(slType => (
+                  <SelectItem value={slType.value} key={slType.title}>
+                    {slType.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
           <InputField
-            labelProps={{ children: 'Stop Loss (Points)' }}
+            labelProps={{
+              children: `Stop Loss (${slTypeSelectControl.value?.toLowerCase()})`,
+              className: 'capitalize',
+            }}
             inputProps={{
               ...getInputProps(fields.stopLossValue, { type: 'number' }),
               autoCapitalize: 'none',
+              step: 0.1,
             }}
             errors={fields.stopLossValue.errors}
           />
           <InputField
-            labelProps={{ children: 'Take Profit (Points)' }}
+            labelProps={{
+              children: `Take Profit (${slTypeSelectControl.value?.toLowerCase()})`,
+            }}
             inputProps={{
               ...getInputProps(fields.takeProfitValue, { type: 'number' }),
               autoCapitalize: 'none',
+              step: 0.1,
             }}
             errors={fields.takeProfitValue.errors}
           />

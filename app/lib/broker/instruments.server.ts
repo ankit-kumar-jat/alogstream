@@ -29,7 +29,6 @@ export async function getInstruments() {
 
 export async function saveInstumentsIntoDB() {
   const instruments = await getInstruments()
-  console.log('🚀 ~ saveInstumentsIntoDB ~ instruments:', instruments[0])
 
   await db.instrument.createMany({
     data: instruments.map(instrument => ({

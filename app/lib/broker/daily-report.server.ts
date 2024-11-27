@@ -1,96 +1,74 @@
-import type { Exchange } from '@prisma/client'
-import { AngleoneTrade } from '~/types/angleone'
+import { retryAsync } from 'ts-retry'
+import { db } from '~/lib/db.server'
+import { getToken } from './angleone.server'
+import { getPositions } from './portfolio.server'
 
-export async function processUserTrades(userId: string) {
-  // TODO: get user token and trades from api and use blow function to calculate pnl
-  // and store pnl in db
+const BATCH_SIZE = 10
+
+export async function processAllUserPositions() {
+  const users = await db.user.findMany({})
+
+  for (let i = 0; i < users.length; i += BATCH_SIZE) {
+    const batch = users.slice(i, i + BATCH_SIZE)
+    try {
+      const promises = batch.map(user => processUserPositions(user.id))
+      return Promise.all(promises)
+    } catch (error) {
+      console.error(
+        `Error processing user batch ${i / BATCH_SIZE + 1}:`,
+        `userId: ${batch.map(({ id }) => id)}`,
+        error,
+      )
+    }
+  }
 }
 
-interface Trade {
-  price: number
-  quantity: number
-}
-
-interface SymbolData {
-  buyQueue: Array<Trade>
-  sellQueue: Array<Trade>
-  pnl: number
-  exchange: Exchange
-  buyTradeCount: number
-  sellTraderCount: number
-}
-
-export function processIntradayTrades(trades: AngleoneTrade[]) {
-  const intradayTrades = trades.filter(
-    trade => trade.producttype === 'INTRADAY',
-  ) // Adjust productType key as needed
-
-  const tradeSummary: Record<string, SymbolData> = {}
-
-  intradayTrades.forEach(trade => {
-    const { tradingsymbol, transactiontype, fillprice, fillsize, exchange } =
-      trade
-
-    if (!tradeSummary[tradingsymbol]) {
-      tradeSummary[tradingsymbol] = {
-        buyQueue: [],
-        sellQueue: [],
-        pnl: 0,
-        exchange,
-        sellTraderCount: 0,
-        buyTradeCount: 0,
-      }
-    }
-
-    const stockData = tradeSummary[tradingsymbol]
-
-    if (transactiontype === 'BUY') {
-      stockData.buyQueue.push({
-        price: parseFloat(fillprice),
-        quantity: parseInt(fillsize, 10),
-      })
-      stockData.buyTradeCount += 1
-    } else if (transactiontype === 'SELL') {
-      stockData.sellQueue.push({
-        price: parseFloat(fillprice),
-        quantity: parseInt(fillsize, 10),
-      })
-      stockData.sellTraderCount += 1
-    }
-
-    const queue =
-      transactiontype === 'BUY' ? stockData.buyQueue : stockData.sellQueue
-    const oppositeQueue =
-      transactiontype === 'BUY' ? stockData.sellQueue : stockData.buyQueue
-
-    let pnl = 0
-
-    while (queue.length && oppositeQueue.length) {
-      const currentOrder = queue[0]
-      const oppositeOrder = oppositeQueue[0]
-
-      const matchQty = Math.min(currentOrder.quantity, oppositeOrder.quantity)
-
-      // Calculate PnL based on the trade direction
-      if (transactiontype === 'BUY') {
-        pnl += (oppositeOrder.price - currentOrder.price) * matchQty
-      } else {
-        pnl += (currentOrder.price - oppositeOrder.price) * matchQty
-      }
-
-      // Update remaining quantities in queues
-      currentOrder.quantity -= matchQty
-      oppositeOrder.quantity -= matchQty
-
-      // Remove fully matched orders from the queue
-      if (currentOrder.quantity === 0) queue.shift()
-      if (oppositeOrder.quantity === 0) oppositeQueue.shift()
-    }
-    tradeSummary[tradingsymbol].pnl += pnl
+export async function processUserPositions(userId: string) {
+  const brokerAccounts = await db.brokerAccount.findMany({
+    where: {
+      userId,
+    },
+    select: { id: true },
   })
 
-  return Object.keys(tradeSummary).map(key => ({
-    ...tradeSummary[key],
-    symbol: key,
-  }))
+  if (brokerAccounts.length) {
+    return null
+  }
+
+  const promises = brokerAccounts.map(({ id }) =>
+    processBrokerAccountPositions(userId, id),
+  )
+
+  return await Promise.all(promises)
+}
+
+export async function processBrokerAccountPositions(
+  userId: string,
+  brokerAccountId: string,
+) {
+  const { data: tokens } = await getToken({ brokerAccountId, userId })
+  if (!tokens) {
+    return null
+  }
+
+  const positions = await retryAsync(
+    async () => await getPositions({ authToken: tokens.authToken }),
+    { delay: 1000, maxTry: 3 },
+  )
+  if (!positions) {
+    return null
+  }
+
+  return await db.dailyTradeReport.createMany({
+    data: positions.map(position => ({
+      exchange: position.exchange,
+      symbol: position.tradingsymbol,
+      symbolToken: position.symboltoken,
+      buyQty: parseInt(position.buyqty, 10),
+      sellQty: parseInt(position.sellqty, 10),
+      pnl: position.pnl,
+      userId,
+      brokerAccountId,
+    })),
+  })
 }

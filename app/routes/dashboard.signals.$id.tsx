@@ -2,6 +2,7 @@ import { SignalStatus } from '@prisma/client'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node'
 import { data } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
+import { Copy } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
@@ -70,6 +71,14 @@ export default function TradeSignals() {
     )
   }
 
+  const onCopyWebhookURL = () => {
+    navigator.clipboard.writeText(signal.webhookURL)
+  }
+
+  const onCopyWebhookPayload = () => {
+    navigator.clipboard.writeText(signal.webhookPayload)
+  }
+
   return (
     <div className="container mx-auto my-10 max-w-3xl space-y-4 px-4">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -82,29 +91,63 @@ export default function TradeSignals() {
           <p>{signal.name}</p>
         </div>
         <div>
+          <p className="text-sm text-muted-foreground">Signal Status</p>
+          <p>{signal.status}</p>
+        </div>
+        <div>
           <p className="text-sm text-muted-foreground">Stock</p>
           <p>
             {signal.exchange} - {signal.tickerSymbol}
           </p>
         </div>
         <div>
+          <p className="text-sm text-muted-foreground">Order Size (Lots)</p>
+          <p>{signal.size}</p>
+        </div>
+        <div>
           <p className="text-sm text-muted-foreground">Stop Loss</p>
           <p>
             {signal.stopLossValue}
-            {signal.targetStopLossType === 'PERCENTAGE' ? '%' : ''}
+            {signal.targetStopLossType === 'PERCENTAGE' ? '%' : ' Point'}
           </p>
         </div>
         <div>
           <p className="text-sm text-muted-foreground">Target</p>
           <p>
             {signal.takeProfitValue}
-            {signal.targetStopLossType === 'PERCENTAGE' ? '%' : ''}
+            {signal.targetStopLossType === 'PERCENTAGE' ? '%' : ' Point'}
           </p>
         </div>
+
         <div className="sm:col-span-2">
           <p className="text-sm text-muted-foreground">Description</p>
-          <p>{signal.description}</p>
+          <p>{signal.description ?? '-'}</p>
         </div>
+      </div>
+      <div className="space-y-2">
+        <h2 className="text-lg font-medium">TradingView Link</h2>
+        <pre className="relative rounded-lg bg-muted p-2">
+          {signal.webhookURL}
+          <Button
+            className="absolute right-0 top-0"
+            onClick={onCopyWebhookURL}
+            size="icon"
+            variant="ghost"
+          >
+            <Copy />
+          </Button>
+        </pre>
+        <pre className="relative rounded-lg bg-muted p-2">
+          {signal.webhookPayload}
+          <Button
+            className="absolute right-0 top-0"
+            onClick={onCopyWebhookPayload}
+            size="icon"
+            variant="ghost"
+          >
+            <Copy />
+          </Button>
+        </pre>
       </div>
     </div>
   )

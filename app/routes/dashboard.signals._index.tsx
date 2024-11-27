@@ -12,6 +12,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const signals = await db.signal.findMany({
     where: { userId },
+    orderBy: { createdAt: 'desc' },
   })
 
   return {

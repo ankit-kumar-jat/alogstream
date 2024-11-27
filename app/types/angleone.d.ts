@@ -97,8 +97,6 @@ export interface AngleoneTrade {
 export interface AngleonePosition {
   exchange: Exchange
   symboltoken: string
-  producttype: string
-  tradingsymbol: string
   symbolname: string
   instrumenttype: string
   priceden: string
@@ -108,10 +106,8 @@ export interface AngleonePosition {
   precision: string
   multiplier: string
   boardlotsize: string
-  buyqty: string
-  sellqty: string
-  buyamount: string
-  sellamount: string
+  producttype: string
+  tradingsymbol: string
   symbolgroup: string
   strikeprice: string
   optiontype: string
@@ -133,6 +129,15 @@ export interface AngleonePosition {
   totalbuyavgprice: string
   totalsellavgprice: string
   netprice: string
+  buyqty: string
+  sellqty: string
+  buyamount: string
+  sellamount: string
+  pnl: string
+  realised: string
+  unrealised: string
+  ltp: string
+  close: string
 }
 
 export interface AngleoneLTPRes {

@@ -5,7 +5,6 @@ import { DataTableColumnHeader } from './signals-table-column-header'
 import { DataTableRowActions } from './signals-table-row-actions'
 import { statuses } from './signals-table-toolbar'
 import { Link } from '@remix-run/react'
-import { Dialog } from '@radix-ui/react-dialog'
 
 interface ModifiedSignal
   extends Omit<Signal, 'stopLossValue' | 'takeProfitValue' | 'allocatedFund'> {
@@ -55,12 +54,22 @@ export const columns: ColumnDef<ModifiedSignal>[] = [
     ),
   },
   {
+    accessorKey: 'size',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Order Size(Lots)" />
+    ),
+    cell: ({ row }) => <div className="w-[60px]">{row.getValue('size')}</div>,
+  },
+  {
     accessorKey: 'takeProfitValue',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Target" />
     ),
     cell: ({ row }) => (
-      <div className="w-[80px]">{row.getValue('takeProfitValue')}</div>
+      <div className="w-[80px]">
+        {row.getValue('takeProfitValue')}
+        {row.original.targetStopLossType === 'POINTS' ? ' Points' : '%'}
+      </div>
     ),
     enableSorting: false,
     enableHiding: false,
@@ -71,7 +80,10 @@ export const columns: ColumnDef<ModifiedSignal>[] = [
       <DataTableColumnHeader column={column} title="Stop Loss" />
     ),
     cell: ({ row }) => (
-      <div className="w-[80px]">{row.getValue('stopLossValue')}</div>
+      <div className="w-[80px]">
+        {row.getValue('stopLossValue')}
+        {row.original.targetStopLossType === 'POINTS' ? ' Points' : '%'}
+      </div>
     ),
     enableSorting: false,
     enableHiding: false,

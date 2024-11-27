@@ -32,16 +32,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const searchResults = await db.instrument.findMany({
     where: {
-      name: { startsWith: searchQuery.toUpperCase() },
+      OR: [
+        { name: { startsWith: searchQuery.toUpperCase() } },
+        { symbol: { startsWith: searchQuery.toUpperCase() } },
+      ],
       exchange: { equals: exchange },
     },
-    take: 20,
+    take: 40,
   })
   return { instruments: searchResults }
 }
 
 interface InstrumentSelectProps {
-  exchange: Exchange
+  exchange?: Exchange
   value?: string
   setValue: (value: string) => void
 }
