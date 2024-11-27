@@ -53,7 +53,7 @@ export default function Reports() {
   const { brokerAccounts, reports } = useLoaderData<typeof loader>()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const selectedAccount = searchParams.get('acc') ?? brokerAccounts?.[0].id
+  const selectedAccount = searchParams.get('acc') ?? brokerAccounts?.[0]?.id
 
   const onAccountChange = (acc: string) => {
     setSearchParams({ acc })

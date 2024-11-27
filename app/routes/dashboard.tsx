@@ -100,11 +100,6 @@ const SIDEBAR_LINKS = [
   //   url: '/dashboard/backtests',
   //   icon: FlaskConical,
   // },
-  // {
-  //   title: 'Orders',
-  //   url: '/dashboard/orders',
-  //   icon: FlaskConical,
-  // },
   {
     title: 'Reports',
     url: '/dashboard/reports',
