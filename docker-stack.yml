@@ -2,45 +2,34 @@ services:
   traefik:
     image: traefik:v3.1
     command:
-      - '--providers.docker'
-      # - '--api.insecure=true'
+      - '--log.level=DEBUG'
+      - '--api.insecure=false'
+      - '--providers.docker=true'
       - '--providers.docker.exposedbydefault=false'
-      - '--entryPoints.websecure.address=:443'
       - '--entrypoints.web.address=:80'
+      - '--entryPoints.websecure.address=:443'
       - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
       - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
       - '--certificatesresolvers.myresolver.acme.tlschallenge=true'
       - '--certificatesresolvers.myresolver.acme.email=mohitdolani19@gmail.com'
-      - '--certificatesresolvers.myresolver.acme.storage=/traefik/acme.json'
+      - '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json'
     ports:
-      - mode: host
-        protocol: tcp
-        published: 80
-        target: 80
-      - mode: host
-        protocol: tcp
-        published: 443
-        target: 443
-      - mode: host # traefik Dashbaord WebGui
-        protocol: tcp
-        published: 8080
-        target: 8080
+      - 80:80
+      - 443:443
+      - 8080:8080
     restart: unless-stopped
     volumes:
-      - traefik:/traefikt
-      - /var/run/docker.sock:/var/run/docker.sock
+      - './letsencrypt:/letsencrypt'
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'
 
   web:
     image: ghcr.io/ankit-kumar-jat/alogstream:${GIT_COMMIT_HASH:-latest}
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.services.web.loadbalancer.server.port=3000'
-      - 'traefik.http.routers.web.rule=Host(`${HOST}`) ||
-        Host(`algostream.tomeki.site`)'
+      - 'traefik.http.routers.web.rule=Host(`${HOST}`)
       - 'traefik.http.routers.web.entrypoints=websecure'
-      - 'traefik.http.routers.web.tls=true'
       - 'traefik.http.routers.web.tls.certresolver=myresolver'
-
     environment:
       - SESSION_SECRET=${SESSION_SECRET}
       - HONEYPOT_SECRET=${HONEYPOT_SECRET}
@@ -51,4 +40,4 @@ services:
         order: start-first
 
 volumes:
-  traefik:
+  letsencrypt:
