@@ -76,11 +76,15 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({ success: false, message: 'Invalid api key' }, { status: 401 })
   }
 
-  if (signal)
-    if (signal.status !== 'ACTIVE') {
-      // Ignore status to
-      return data({ success: true }, { status: 200 })
-    }
+  if (signal && signal.status !== 'ACTIVE') {
+    // Ignore status to
+    return data({ success: true }, { status: 200 })
+  }
+
+  if (!inMarketTime()) {
+    // Ignore order if not in market time
+    return data({ success: true }, { status: 200 })
+  }
 
   const formPayload = await request.json()
   const parsed = await SignalSchema.safeParseAsync(formPayload)
@@ -119,4 +123,14 @@ export async function action({ request }: ActionFunctionArgs) {
   )
 
   return json({ success: true }, { status: 200 })
+}
+
+const MARKET_START = 9 * 60 + 30 // 9:30 am
+var MARKET_END = 14 * 60 + 30 // 2:30 pm
+// we only accept orders till 2:30 pm
+
+function inMarketTime() {
+  var now = new Date()
+  var time = now.getHours() * 60 + now.getMinutes()
+  return time >= MARKET_START && time < MARKET_END
 }
