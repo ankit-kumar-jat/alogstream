@@ -160,6 +160,8 @@ model DailyTradeReport {
   sellQty     Int
   pnl         Decimal
 
+  createdAt DateTime @default(now())
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 

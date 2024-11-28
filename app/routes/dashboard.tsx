@@ -68,9 +68,9 @@ export default function DashboardLayout() {
                 </Button>
               </Form>
             </div>
-            <main className="mx-auto">
+            <div className="mx-auto">
               <Outlet />
-            </main>
+            </div>
           </div>
         </SidebarInset>
       </SidebarProvider>
