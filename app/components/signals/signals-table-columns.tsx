@@ -1,10 +1,10 @@
+import { Link } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
 import type { Signal } from '@prisma/client'
 
-import { DataTableColumnHeader } from './signals-table-column-header'
+import { DataTableColumnHeader } from '~/components/data-table/column-header'
 import { DataTableRowActions } from './signals-table-row-actions'
 import { statuses } from './signals-table-toolbar'
-import { Link } from '@remix-run/react'
 
 interface ModifiedSignal
   extends Omit<Signal, 'stopLossValue' | 'takeProfitValue' | 'allocatedFund'> {

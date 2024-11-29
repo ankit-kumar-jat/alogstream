@@ -3,9 +3,8 @@ import { Archive, Circle, CircleCheckBig, CircleOff, X } from 'lucide-react'
 
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
-
-import { DataTableFacetedFilter } from './signals-table-fact-filter'
-import { DataTableViewOptions } from './signals-table-view-options'
+import { DataTableFacetedFilter } from '~/components/data-table/fact-filter'
+import { DataTableViewOptions } from '~/components/data-table/view-options'
 
 export const statuses = [
   {
@@ -30,13 +29,13 @@ export const statuses = [
   },
 ]
 
-interface DataTableToolbarProps<TData> {
+interface SignalTableToolbarProps<TData> {
   table: Table<TData>
 }
 
-export function DataTableToolbar<TData>({
+export function SignalTableToolbar<TData>({
   table,
-}: DataTableToolbarProps<TData>) {
+}: SignalTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
 
   return (

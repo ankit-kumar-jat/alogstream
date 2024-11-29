@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
 
-interface DataTableRowActionsProps<TData> {
+interface SignalTableRowActionsProps<TData> {
   row: Row<TData>
 }
 
@@ -27,9 +27,9 @@ const statusOptions = [
   { label: 'Archived', value: 'ARCHIVED', disabled: false },
 ]
 
-export function DataTableRowActions<TData>({
+export function SignalTableRowActions<TData>({
   row,
-}: DataTableRowActionsProps<TData>) {
+}: SignalTableRowActionsProps<TData>) {
   const status = row.getValue<string>('status')
   const signalId = row.getValue<string>('id')
 

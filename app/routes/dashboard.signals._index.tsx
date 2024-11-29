@@ -1,8 +1,10 @@
 import type { LoaderFunctionArgs } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import { Plus } from 'lucide-react'
-import { SignalsTable } from '~/components/signals/signals-table'
+import { DataTable } from '~/components/data-table'
+import { SignalTablePagination } from '~/components/signals/signal-table-pagination'
 import { columns } from '~/components/signals/signals-table-columns'
+import { SignalTableToolbar } from '~/components/signals/signals-table-toolbar'
 import { Button } from '~/components/ui/button'
 import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
@@ -41,7 +43,12 @@ export default function TradeSignals() {
       </div>
 
       <div>
-        <SignalsTable data={signals} columns={columns} />
+        <DataTable
+          data={signals}
+          columns={columns}
+          toolbar={table => <SignalTableToolbar table={table} />}
+          pagination={table => <SignalTablePagination table={table} />}
+        />
       </div>
     </div>
   )
