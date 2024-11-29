@@ -125,8 +125,8 @@ export async function action({ request }: ActionFunctionArgs) {
   return json({ success: true }, { status: 200 })
 }
 
-const MARKET_START = 9 * 60 + 30 // 9:30 am
-var MARKET_END = 14 * 60 + 30 // 2:30 pm
+const MARKET_START = 9 * 60 + 15 // 9:15 am
+const MARKET_END = 14 * 60 + 30 // 2:30 pm
 // we only accept orders till 2:30 pm
 
 function inMarketTime() {
