@@ -44,6 +44,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       clientId: true,
       isLoginRequired: true,
     },
+    orderBy: {
+      createdAt: 'desc',
+    },
   })
   return { accounts: BrokerAccounts }
 }

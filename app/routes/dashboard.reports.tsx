@@ -57,6 +57,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
         lte: toDate,
       },
     },
+    orderBy: {
+      createdAt: 'desc',
+    },
   })
 
   return {

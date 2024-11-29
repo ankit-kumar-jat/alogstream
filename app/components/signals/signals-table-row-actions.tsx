@@ -74,6 +74,9 @@ export function DataTableRowActions<TData>({
         <DropdownMenuItem asChild>
           <Link to={`/dashboard/signals/${signalId}`}>View</Link>
         </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to={`/dashboard/signals/create?id=${signalId}`}>Edit</Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>Status</DropdownMenuSubTrigger>

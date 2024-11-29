@@ -1,8 +1,8 @@
 import { SignalStatus } from '@prisma/client'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node'
 import { data } from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
-import { Copy } from 'lucide-react'
+import { Link, useLoaderData } from '@remix-run/react'
+import { Copy, Pen } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
@@ -83,6 +83,9 @@ export default function TradeSignals() {
     <div className="container mx-auto my-10 max-w-3xl space-y-4 px-4">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-lg font-bold md:text-xl">Signals Details</h1>
+        <Button asChild size="sm">
+          <Link to={`/dashboard/signals/create?id=${signal.id}`}>Edit</Link>
+        </Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">

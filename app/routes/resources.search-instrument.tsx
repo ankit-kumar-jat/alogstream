@@ -47,12 +47,14 @@ interface InstrumentSelectProps {
   exchange?: Exchange
   value?: string
   setValue: (value: string) => void
+  defaultSearch?: string
 }
 
 export function InstrumentSelect({
   exchange,
   value = '',
   setValue,
+  defaultSearch,
 }: InstrumentSelectProps) {
   const [open, setOpen] = useState(false)
 
@@ -63,6 +65,12 @@ export function InstrumentSelect({
       `/resources/search-instrument?exchange=${exchange}&q=${search}`,
     )
   }, 400)
+
+  useEffect(() => {
+    if (defaultSearch) {
+      handleOnSearchChange(defaultSearch)
+    }
+  }, [])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

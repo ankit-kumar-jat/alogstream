@@ -46,6 +46,7 @@ const SignalFormSchema = z.object({
   // allocatedFund: z.number().gt(0),
   size: z.number().gt(0), // order-size/lots
   brokerAccounts: z.array(z.string().cuid2()),
+  id: z.string().cuid2().optional(),
 })
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -59,6 +60,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (signalId && typeof signalId === 'string') {
     signal = await db.signal.findUnique({
       where: { userId, id: signalId },
+      include: {
+        brokerAccounts: { select: { id: true } },
+      },
     })
   }
 
@@ -115,6 +119,7 @@ export async function action({ request }: ActionFunctionArgs) {
     takeProfitValue,
     targetStopLossType,
     size,
+    id,
   } = submission.value
 
   const symbolDetails = await db.instrument.findUnique({
@@ -132,25 +137,34 @@ export async function action({ request }: ActionFunctionArgs) {
     )
   }
 
-  await db.signal.create({
-    data: {
-      name,
-      description,
-      exchange: symbolDetails.exchange,
-      tickerSymbol: symbolDetails.symbol,
-      tickerSymbolToken: symbolDetails.token,
-      type: 'INTRADAY',
-      stopLossValue,
-      targetStopLossType,
-      takeProfitValue,
-      userId,
-      allocatedFund: 0,
-      size,
-      brokerAccounts: {
-        connect: brokerAccounts.map(id => ({ id })),
-      },
+  const payload = {
+    name,
+    description,
+    exchange: symbolDetails.exchange,
+    tickerSymbol: symbolDetails.symbol,
+    tickerSymbolToken: symbolDetails.token,
+    type: 'INTRADAY',
+    stopLossValue,
+    targetStopLossType,
+    takeProfitValue,
+    userId,
+    allocatedFund: 0,
+    size,
+    brokerAccounts: {
+      connect: brokerAccounts.map(id => ({ id })),
     },
-  })
+  }
+
+  if (id) {
+    await db.signal.update({
+      where: { id },
+      data: payload,
+    })
+  } else {
+    await db.signal.create({
+      data: payload,
+    })
+  }
 
   return redirect('/dashboard/signals')
 }
@@ -164,7 +178,20 @@ export default function TradeSignals() {
   const [form, fields] = useForm({
     id: 'onboarding-form',
     constraint: getZodConstraint(SignalFormSchema),
-    defaultValue: { exchange: 'NSE', targetStopLossType: 'POINTS' },
+    defaultValue: signal
+      ? {
+          id: signal.id,
+          name: signal.name,
+          description: signal.description,
+          exchange: signal.exchange,
+          targetStopLossType: signal.targetStopLossType,
+          symbol: signal.tickerSymbolToken,
+          size: signal.size,
+          stopLossValue: signal.stopLossValue,
+          takeProfitValue: signal.takeProfitValue,
+          brokerAccounts: signal.brokerAccounts.map(({ id }) => id),
+        }
+      : { exchange: 'NSE', targetStopLossType: 'POINTS' },
     lastResult: actionData?.result,
     onValidate({ formData }) {
       return parseWithZod(formData, { schema: SignalFormSchema })
@@ -188,6 +215,11 @@ export default function TradeSignals() {
           className="grid grid-cols-1 gap-4 sm:grid-cols-2"
           {...getFormProps(form)}
         >
+          <input
+            readOnly
+            hidden
+            {...getInputProps(fields.id, { type: 'text' })}
+          />
           <InputField
             labelProps={{ children: 'Signal Name' }}
             inputProps={{
@@ -227,6 +259,7 @@ export default function TradeSignals() {
               exchange={fields.exchange.value as Exchange}
               value={symbolSelectControl.value}
               setValue={symbolSelectControl.change}
+              defaultSearch={signal?.tickerSymbol}
             />
           </FormField>
           <InputField
@@ -327,7 +360,9 @@ export default function TradeSignals() {
           </div>
           <div className="sm:col-span-2">
             <ErrorList errors={form.errors} id={form.errorId} />
-            <Button disabled={isPending}>Create</Button>
+            <Button disabled={isPending}>
+              {signal?.id ? 'Save Changes' : 'Create Signal'}
+            </Button>
           </div>
         </Form>
       </div>
