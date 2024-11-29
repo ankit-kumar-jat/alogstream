@@ -76,16 +76,6 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({ success: false, message: 'Invalid api key' }, { status: 401 })
   }
 
-  if (signal && signal.status !== 'ACTIVE') {
-    // Ignore status to
-    return data({ success: true }, { status: 200 })
-  }
-
-  if (!inMarketTime()) {
-    // Ignore order if not in market time
-    return data({ success: true }, { status: 200 })
-  }
-
   const formPayload = await request.json()
   const parsed = await SignalSchema.safeParseAsync(formPayload)
 
@@ -98,6 +88,24 @@ export async function action({ request }: ActionFunctionArgs) {
       },
       { status: 400 },
     )
+  }
+
+  db.signalLogs.create({
+    data: {
+      body: formPayload,
+      signalId: signal.id,
+      userId: signal.userId,
+    },
+  })
+
+  if (signal && signal.status !== 'ACTIVE') {
+    // Ignore status to
+    return data({ success: true }, { status: 200 })
+  }
+
+  if (!inMarketTime()) {
+    // Ignore order if not in market time
+    return data({ success: true }, { status: 200 })
   }
 
   signal.brokerAccounts.map(

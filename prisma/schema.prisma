@@ -29,6 +29,7 @@ model User {
   Order            Order[]
   Strategy         Strategy[]
   DailyTradeReport DailyTradeReport[]
+  SignalLogs       SignalLogs[]
 }
 
 model Password {
@@ -146,9 +147,10 @@ model Signal {
 
   brokerAccounts BrokerAccount[]
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
-  Order  Order[]
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  Order      Order[]
+  SignalLogs SignalLogs[]
 }
 
 model DailyTradeReport {
@@ -167,6 +169,18 @@ model DailyTradeReport {
 
   brokerAccount   BrokerAccount @relation(fields: [brokerAccountId], references: [id])
   brokerAccountId String
+}
+
+model SignalLogs {
+  id        String   @id @default(cuid())
+  body      Json
+  createdAt DateTime @default(now())
+
+  signal   Signal @relation(fields: [signalId], references: [id], onDelete: NoAction)
+  signalId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
 }
 
 model Instrument {
