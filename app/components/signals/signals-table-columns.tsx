@@ -3,7 +3,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import type { Signal } from '@prisma/client'
 
 import { DataTableColumnHeader } from '~/components/data-table/column-header'
-import { DataTableRowActions } from './signals-table-row-actions'
+import { SignalTableRowActions } from './signals-table-row-actions'
 import { statuses } from './signals-table-toolbar'
 
 interface ModifiedSignal
@@ -117,6 +117,6 @@ export const columns: ColumnDef<ModifiedSignal>[] = [
   },
   {
     id: 'actions',
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    cell: ({ row }) => <SignalTableRowActions row={row} />,
   },
 ]
