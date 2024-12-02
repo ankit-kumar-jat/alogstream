@@ -40,7 +40,9 @@ import type { ActionFunctionArgs } from '@remix-run/node'
 // }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const formPayload = Object.entries(await request.formData())
-  console.log('🚀 ~ action ~ formPayload:', formPayload)
+  if (request.headers.get('content-type')?.includes('application/json')) {
+    const formPayload = await request.json()
+    console.log('🚀 ~ action ~ formPayload:', formPayload)
+  }
   return {}
 }
