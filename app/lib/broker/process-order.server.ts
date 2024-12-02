@@ -45,6 +45,7 @@ export async function processOrder({
       position.sellqty !== position.buyqty
     )
   })
+  console.log('🚀 ~ isPendingTrade ~ isPendingTrade:', isPendingTrade)
 
   if (isPendingTrade) {
     return null
@@ -87,6 +88,8 @@ export async function processOrder({
     price: price,
     ordertag: 'ALS',
   })
+
+  console.log('🚀 ~ orderRes:', orderRes)
 
   if (!orderRes) {
     throw new Error('Unable to create order.')

@@ -104,6 +104,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   if (!inMarketTime()) {
+    console.log('Market is closed.')
     // Ignore order if not in market time
     return data({ success: true }, { status: 200 })
   }
