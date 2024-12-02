@@ -6,13 +6,22 @@ import { getPositions } from './portfolio.server'
 const BATCH_SIZE = 10
 
 export async function processAllUserPositions() {
+  console.log(
+    '🚀 ~ DailyReport generation started:',
+    new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
+    ).toLocaleString(),
+  )
+
+  // TODO: add pagination if user increases
   const users = await db.user.findMany({})
 
   for (let i = 0; i < users.length; i += BATCH_SIZE) {
+    console.log('🚀 ~ DailyReport generation started: ', `batch-${i + 1}`)
     const batch = users.slice(i, i + BATCH_SIZE)
     try {
       const promises = batch.map(user => processUserPositions(user.id))
-      return Promise.all(promises)
+      await Promise.all(promises)
     } catch (error) {
       console.error(
         `Error processing user batch ${i / BATCH_SIZE + 1}:`,
@@ -20,7 +29,15 @@ export async function processAllUserPositions() {
         error,
       )
     }
+    console.log('🚀 ~ DailyReport generation completed: ', `batch-${i + 1}`)
   }
+
+  console.log(
+    '🚀 ~ DailyReport generation completed:',
+    new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
+    ).toLocaleString(),
+  )
 }
 
 export async function processUserPositions(userId: string) {
@@ -39,7 +56,7 @@ export async function processUserPositions(userId: string) {
     processBrokerAccountPositions(userId, id),
   )
 
-  return await Promise.all(promises)
+  return Promise.all(promises)
 }
 
 export async function processBrokerAccountPositions(
@@ -59,7 +76,7 @@ export async function processBrokerAccountPositions(
     return null
   }
 
-  return await db.dailyTradeReport.createMany({
+  return db.dailyTradeReport.createMany({
     data: positions.map(position => ({
       exchange: position.exchange,
       symbol: position.tradingsymbol,
