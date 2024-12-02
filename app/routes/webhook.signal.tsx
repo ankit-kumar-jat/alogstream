@@ -142,5 +142,6 @@ function inMarketTime() {
   var now = new Date()
   var time =
     now.getHours() * 60 + now.getMinutes() + now.getTimezoneOffset() - 330 // to convert into IST
+  console.log('🚀 ~ inMarketTime ~ time:', time / 60, now.toLocaleString())
   return time >= MARKET_START && time < MARKET_END
 }
