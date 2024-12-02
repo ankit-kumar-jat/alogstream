@@ -160,7 +160,7 @@ cron.schedule(
 
 // cron-job to generate and save daily reports
 cron.schedule(
-  '10 17 * * 1-5',
+  '20 17 * * 1-5',
   async () => {
     await processAllUserPositions()
   },

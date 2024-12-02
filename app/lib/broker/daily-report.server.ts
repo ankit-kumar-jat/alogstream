@@ -48,7 +48,7 @@ export async function processUserPositions(userId: string) {
     select: { id: true },
   })
 
-  if (brokerAccounts.length) {
+  if (!brokerAccounts.length) {
     return null
   }
 
