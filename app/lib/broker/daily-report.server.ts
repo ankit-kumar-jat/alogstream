@@ -70,8 +70,9 @@ export async function processBrokerAccountPositions(
 
   const positions = await retryAsync(
     async () => await getPositions({ authToken: tokens.authToken }),
-    { delay: 1000, maxTry: 3 },
+    { delay: 1100, maxTry: 2 },
   )
+  console.log('🚀 ~ positions:', userId, positions)
   if (!positions) {
     return null
   }

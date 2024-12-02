@@ -144,7 +144,7 @@ function handleBrowserRequest(
   })
 }
 
-// cron-job to update instruments list every day
+// cron-job to update instruments list every day at night 1:00AM
 cron.schedule(
   '0 1 * * *',
   () => {
@@ -158,9 +158,9 @@ cron.schedule(
   { timezone: 'Asia/Kolkata' },
 )
 
-// cron-job to generate and save daily reports
+// cron-job to generate and save daily reports at 4:00PM Monday-Friday
 cron.schedule(
-  '20 17 * * 1-5',
+  '35 17 * * 1-5',
   async () => {
     await processAllUserPositions()
   },
