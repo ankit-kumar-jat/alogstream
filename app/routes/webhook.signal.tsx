@@ -61,7 +61,10 @@ export async function action({ request }: ActionFunctionArgs) {
   const key = url.searchParams.get('key')
 
   if (!key) {
-    return json({ success: false, message: 'Invalid api key' }, { status: 401 })
+    return Response.json(
+      { success: false, message: 'Invalid api key' },
+      { status: 401 },
+    )
   }
 
   const signal = await db.signal.findUnique({
@@ -74,14 +77,17 @@ export async function action({ request }: ActionFunctionArgs) {
   })
 
   if (!signal) {
-    return json({ success: false, message: 'Invalid api key' }, { status: 401 })
+    return Response.json(
+      { success: false, message: 'Invalid api key' },
+      { status: 401 },
+    )
   }
 
   const formPayload = await request.json()
   const parsed = await SignalSchema.safeParseAsync(formPayload)
 
   if (!parsed.success) {
-    return json(
+    return Response.json(
       {
         success: false,
         message: 'Invalid payload',
@@ -132,7 +138,7 @@ export async function action({ request }: ActionFunctionArgs) {
       ),
   )
 
-  return json({ success: true }, { status: 200 })
+  return Response.json({ success: true }, { status: 200 })
 }
 
 function inMarketTime() {
