@@ -140,6 +140,7 @@ const MARKET_END = 14 * 60 + 30 // 2:30 pm
 
 function inMarketTime() {
   var now = new Date()
-  var time = now.getHours() * 60 + now.getMinutes()
+  var time =
+    now.getHours() * 60 + now.getMinutes() + now.getTimezoneOffset() - 330 // to convert into IST
   return time >= MARKET_START && time < MARKET_END
 }
