@@ -46,9 +46,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const fromDate = from ? new Date(from) : addDays(new Date(), -1)
   const toDate = to ? new Date(to) : addDays(new Date(), -1)
   fromDate.setHours(0, 0, 0)
-  toDate.setHours(24, 0, 0)
+  toDate.setHours(23, 59, 59)
   console.log('🚀 ~ loader ~ toDate:', toDate)
   console.log('🚀 ~ loader ~ fromDate:', fromDate)
+
+  console.log(
+    '🚀 ~ loader ~ dailyReports:',
+    await db.dailyTradeReport.findMany({ where: { userId } }),
+  )
 
   const reports = await db.dailyTradeReport.findMany({
     where: {
@@ -63,6 +68,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       createdAt: 'desc',
     },
   })
+  console.log('🚀 ~ loader ~ reports:', reports)
 
   return {
     brokerAccounts,
