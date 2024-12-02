@@ -146,7 +146,7 @@ function handleBrowserRequest(
 
 // cron-job to update instruments list every day
 cron.schedule(
-  '0 0 1 * * *',
+  '0 1 * * *',
   () => {
     retryAsync(
       async () => {
@@ -160,7 +160,7 @@ cron.schedule(
 
 // cron-job to generate and save daily reports
 cron.schedule(
-  '0 0 16 * * 1-5',
+  '0 16 * * 1-5',
   async () => {
     await processAllUserPositions()
   },

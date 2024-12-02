@@ -5,6 +5,7 @@ import { retryAsync } from 'ts-retry'
 
 import { processOrder } from '~/lib/broker/process-order.server'
 import { db } from '~/lib/db.server'
+import { isCurrentTimeInWindow } from '~/lib/utils'
 
 // Instructions to add signal
 // create signal => select symbol/stock and exchange, name signal, qty,
@@ -134,14 +135,14 @@ export async function action({ request }: ActionFunctionArgs) {
   return json({ success: true }, { status: 200 })
 }
 
-const MARKET_START = 9 * 60 + 15 // 9:15 am
-const MARKET_END = 14 * 60 + 30 // 2:30 pm
-// we only accept orders till 2:30 pm
-
 function inMarketTime() {
-  var now = new Date()
-  var time =
-    now.getHours() * 60 + now.getMinutes() + now.getTimezoneOffset() - 330 // to convert into IST
-  console.log('🚀 ~ inMarketTime ~ time:', time / 60, now.toLocaleString())
-  return time >= MARKET_START && time < MARKET_END
+  return isCurrentTimeInWindow({
+    // MARKET_START = 9:15 am
+    startHour: 9,
+    startMinute: 13,
+    // we only accept orders till 2:30 pm
+    // MARKET_CLOSE = 2:30 pm
+    endHour: 14,
+    endMinute: 30,
+  })
 }

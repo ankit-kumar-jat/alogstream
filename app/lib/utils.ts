@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx'
 import { jwtDecode } from 'jwt-decode'
 import { twMerge } from 'tailwind-merge'
+import { string } from 'zod'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -88,5 +89,40 @@ export function isTokenExpired(token: string) {
   } catch (error) {
     console.error('Error decoding token:', error)
     return true
+  }
+}
+
+export function isCurrentTimeInWindow({
+  startHour,
+  startMinute,
+  endHour,
+  endMinute,
+  timeZone = 'Asia/Kolkata',
+}: {
+  startHour: number
+  startMinute: number
+  endHour: number
+  endMinute: number
+  timeZone?: string
+}) {
+  const now = new Date()
+
+  // Convert current time to IST
+  const currentIST = new Date(now.toLocaleString('en-US', { timeZone }))
+
+  // Extract hours and minutes
+  const currentHours = currentIST.getHours()
+  const currentMinutes = currentIST.getMinutes()
+
+  // Calculate time in minutes from midnight
+  const startTime = startHour * 60 + startMinute
+  const endTime = endHour * 60 + endMinute
+  const currentTime = currentHours * 60 + currentMinutes
+
+  // Handle ranges spanning midnight
+  if (startTime <= endTime) {
+    return currentTime >= startTime && currentTime <= endTime
+  } else {
+    return currentTime >= startTime || currentTime <= endTime
   }
 }
