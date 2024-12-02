@@ -30,6 +30,7 @@ model User {
   Strategy         Strategy[]
   DailyTradeReport DailyTradeReport[]
   SignalLogs       SignalLogs[]
+  UserNotification UserNotification[]
 }
 
 model Password {
@@ -147,10 +148,11 @@ model Signal {
 
   brokerAccounts BrokerAccount[]
 
-  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
-  Order      Order[]
-  SignalLogs SignalLogs[]
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  Order            Order[]
+  SignalLogs       SignalLogs[]
+  UserNotification UserNotification[]
 }
 
 model DailyTradeReport {
@@ -183,6 +185,33 @@ model SignalLogs {
   userId String
 }
 
+model Notification {
+  id      String           @id @default(cuid())
+  title   String
+  message String
+  type    NotificationType
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  UserNotification UserNotification[]
+}
+
+model UserNotification {
+  id          String   @id @default(cuid())
+  isRead      Boolean
+  isDelivered Boolean
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: NoAction)
+  notificationId String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  Signal         Signal?      @relation(fields: [signalId], references: [id])
+  signalId       String?
+}
+
 model Instrument {
   token    String   @id
   symbol   String
@@ -190,6 +219,13 @@ model Instrument {
   expiry   String?
   type     String?
   exchange Exchange
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
 }
 
 enum SignalStatus {

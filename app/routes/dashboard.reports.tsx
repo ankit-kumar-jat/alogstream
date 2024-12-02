@@ -47,8 +47,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const toDate = to ? new Date(to) : addDays(new Date(), -1)
   fromDate.setHours(0, 0, 0)
   toDate.setHours(23, 59, 59)
-  console.log('🚀 ~ loader ~ toDate:', toDate)
-  console.log('🚀 ~ loader ~ fromDate:', fromDate)
+  console.log('🚀 ~ loader ~ fromDate:', fromDate, from)
+  console.log('🚀 ~ loader ~ toDate:', toDate, to)
 
   console.log(
     '🚀 ~ loader ~ dailyReports:',
