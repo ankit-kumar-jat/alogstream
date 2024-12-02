@@ -1,14 +1,27 @@
+import { Form, useLoaderData } from '@remix-run/react'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { Plus } from 'lucide-react'
 import { Button } from '~/components/ui/button'
-
-import type { LoaderFunctionArgs } from '@remix-run/node'
 import { db } from '~/lib/db.server'
-import { useLoaderData } from '@remix-run/react'
+import { requireUserId } from '~/lib/auth.server'
+
 export async function loader({}: LoaderFunctionArgs) {
   const logs = await db.signalLogs.findMany({})
   const dailyReports = await db.dailyTradeReport.findMany({})
 
   return { logs, dailyReports }
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const userId = await requireUserId(request)
+
+  await db.dailyTradeReport.delete({
+    where: { id: 'cm46yxefd0001sej29iqleazo' },
+  })
+  await db.dailyTradeReport.delete({
+    where: { id: 'cm46zgodl0000130ulf4v11qs' },
+  })
+  return {}
 }
 
 export default function Backtests() {
@@ -25,6 +38,9 @@ export default function Backtests() {
       </div>
 
       <pre>{JSON.stringify(dailyReports)}</pre>
+      <Form method="POST">
+        <Button type="submit">clean data</Button>
+      </Form>
     </div>
   )
 }
