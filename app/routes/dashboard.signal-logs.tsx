@@ -15,11 +15,21 @@ export async function loader({}: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
   const userId = await requireUserId(request)
 
-  await db.dailyTradeReport.delete({
-    where: { id: 'cm46yxefd0001sej29iqleazo' },
+  await db.dailyTradeReport.create({
+    data: {
+      exchange: 'NSE',
+      symbol: 'IOC-EQ',
+      symbolToken: '1624',
+      buyQty: 1,
+      sellQty: 1,
+      pnl: '-0.03',
+      createdAt: '2024-12-02T11:50:00.782Z',
+      userId,
+      brokerAccountId: 'cm46pcf4o0001yzkruwluaujx',
+    },
   })
   await db.dailyTradeReport.delete({
-    where: { id: 'cm46zgodl0000130ulf4v11qs' },
+    where: { id: 'cm46yxdn20000sej2mb33p8kr' },
   })
   return {}
 }
