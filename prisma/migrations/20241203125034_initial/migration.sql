@@ -178,8 +178,8 @@ CREATE TABLE "Instrument" (
     "expiry" TEXT,
     "type" TEXT,
     "exchange" "Exchange" NOT NULL,
-    "tickSize" DECIMAL(65,30) NOT NULL DEFAULT 5.0000,
-    "lotSize" INTEGER NOT NULL DEFAULT 1,
+    "tickSize" DECIMAL(65,30) NOT NULL,
+    "lotSize" INTEGER NOT NULL,
 
     CONSTRAINT "Instrument_pkey" PRIMARY KEY ("token")
 );

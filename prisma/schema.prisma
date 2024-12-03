@@ -219,8 +219,8 @@ model Instrument {
   expiry   String?
   type     String?
   exchange Exchange
-  tickSize Decimal  @default("5.0000")
-  lotSize  Int      @default(1)
+  tickSize Decimal
+  lotSize  Int
 }
 
 enum NotificationType {
