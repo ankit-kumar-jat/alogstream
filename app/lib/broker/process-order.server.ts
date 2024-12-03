@@ -45,7 +45,7 @@ export async function processOrder({
       position.sellqty !== position.buyqty
     )
   })
-  console.log('🚀 ~ isPendingTrade ~ isPendingTrade:', isPendingTrade)
+  console.log('🚀 ~ isPendingTrade ~ isPendingTrade:', Boolean(isPendingTrade))
 
   if (isPendingTrade) {
     return null
@@ -82,10 +82,10 @@ export async function processOrder({
     symboltoken: symbolToken,
     transactiontype: txnType,
     quantity: qty,
-    squareoff: targetPrice,
-    stoploss: stopLossPrice,
-    triggerprice: 0,
-    price: price,
+    price: price.toFixed(2),
+    triggerprice: '0',
+    squareoff: targetPrice.toFixed(2),
+    stoploss: stopLossPrice.toFixed(2),
     ordertag: 'ALS',
   })
 
@@ -125,8 +125,8 @@ function calculateTargetAndStoplossPrice({
   targetStopLossType: TargetStopLossType
 }) {
   if (targetStopLossType === 'PERCENTAGE') {
-    const targetPrice = Math.round((price * target) / 100)
-    const stopLossPrice = Math.round((price * stopLoss) / 100)
+    const targetPrice = (price * target) / 100
+    const stopLossPrice = (price * stopLoss) / 100
 
     return { targetPrice, stopLossPrice }
   }

@@ -107,11 +107,12 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (signal && signal.status !== 'ACTIVE') {
     // Ignore status to
+    console.log('Signal is not live')
     return data({ success: true }, { status: 200 })
   }
 
   if (!inMarketTime()) {
-    console.log('Market is closed.')
+    console.log('Market is closed')
     // Ignore order if not in market time
     return data({ success: true }, { status: 200 })
   }

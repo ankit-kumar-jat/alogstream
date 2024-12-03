@@ -22,10 +22,10 @@ interface PlaceOrderReq {
   ordertype: OrderType
   producttype: ProductType
   duration: OrderDuration
-  price: number
-  squareoff: number
-  stoploss: number
-  triggerprice: number
+  price: number | string
+  squareoff: number | string
+  stoploss: number | string
+  triggerprice: number | string
   quantity: number
   ordertag?: string
 }
