@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE "Instrument" ADD COLUMN     "lotSize" INTEGER NOT NULL DEFAULT 1,
-ALTER COLUMN "tickSize" SET DEFAULT 5.0000;

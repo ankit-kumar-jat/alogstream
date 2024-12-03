@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "NotificationType" AS ENUM ('INFO', 'WARNING', 'ERROR', 'SUCCESS');
+
+-- CreateEnum
 CREATE TYPE "SignalStatus" AS ENUM ('DRAFT', 'ACTIVE', 'INACTIVE', 'ARCHIVED');
 
 -- CreateEnum
@@ -94,7 +97,7 @@ CREATE TABLE "Strategy" (
 CREATE TABLE "Signal" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
+    "description" TEXT,
     "label" TEXT,
     "status" "SignalStatus" NOT NULL DEFAULT 'DRAFT',
     "type" TEXT NOT NULL,
@@ -119,14 +122,52 @@ CREATE TABLE "DailyTradeReport" (
     "id" TEXT NOT NULL,
     "exchange" "Exchange" NOT NULL,
     "symbol" TEXT NOT NULL,
-    "totalTrades" INTEGER NOT NULL,
-    "totalBuy" INTEGER NOT NULL,
-    "totalSell" INTEGER NOT NULL,
+    "symbolToken" TEXT NOT NULL,
+    "buyQty" INTEGER NOT NULL,
+    "sellQty" INTEGER NOT NULL,
     "pnl" DECIMAL(65,30) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "userId" TEXT NOT NULL,
     "brokerAccountId" TEXT NOT NULL,
 
     CONSTRAINT "DailyTradeReport_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SignalLogs" (
+    "id" TEXT NOT NULL,
+    "body" JSONB NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "signalId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+
+    CONSTRAINT "SignalLogs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Notification" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "type" "NotificationType" NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "UserNotification" (
+    "id" TEXT NOT NULL,
+    "isRead" BOOLEAN NOT NULL,
+    "isDelivered" BOOLEAN NOT NULL,
+    "metadata" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "notificationId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "signalId" TEXT,
+
+    CONSTRAINT "UserNotification_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -137,6 +178,8 @@ CREATE TABLE "Instrument" (
     "expiry" TEXT,
     "type" TEXT,
     "exchange" "Exchange" NOT NULL,
+    "tickSize" DECIMAL(65,30) NOT NULL DEFAULT 5.0000,
+    "lotSize" INTEGER NOT NULL DEFAULT 1,
 
     CONSTRAINT "Instrument_pkey" PRIMARY KEY ("token")
 );
@@ -181,10 +224,10 @@ ALTER TABLE "BrokerAccount" ADD CONSTRAINT "BrokerAccount_userId_fkey" FOREIGN K
 ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Order" ADD CONSTRAINT "Order_signalId_fkey" FOREIGN KEY ("signalId") REFERENCES "Signal"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Order" ADD CONSTRAINT "Order_signalId_fkey" FOREIGN KEY ("signalId") REFERENCES "Signal"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Order" ADD CONSTRAINT "Order_brokerAccountId_fkey" FOREIGN KEY ("brokerAccountId") REFERENCES "BrokerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Order" ADD CONSTRAINT "Order_brokerAccountId_fkey" FOREIGN KEY ("brokerAccountId") REFERENCES "BrokerAccount"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Strategy" ADD CONSTRAINT "Strategy_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -197,6 +240,21 @@ ALTER TABLE "DailyTradeReport" ADD CONSTRAINT "DailyTradeReport_userId_fkey" FOR
 
 -- AddForeignKey
 ALTER TABLE "DailyTradeReport" ADD CONSTRAINT "DailyTradeReport_brokerAccountId_fkey" FOREIGN KEY ("brokerAccountId") REFERENCES "BrokerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SignalLogs" ADD CONSTRAINT "SignalLogs_signalId_fkey" FOREIGN KEY ("signalId") REFERENCES "Signal"("id") ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SignalLogs" ADD CONSTRAINT "SignalLogs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserNotification" ADD CONSTRAINT "UserNotification_notificationId_fkey" FOREIGN KEY ("notificationId") REFERENCES "Notification"("id") ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserNotification" ADD CONSTRAINT "UserNotification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserNotification" ADD CONSTRAINT "UserNotification_signalId_fkey" FOREIGN KEY ("signalId") REFERENCES "Signal"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_BrokerAccountToSignal" ADD CONSTRAINT "_BrokerAccountToSignal_A_fkey" FOREIGN KEY ("A") REFERENCES "BrokerAccount"("id") ON DELETE CASCADE ON UPDATE CASCADE;
