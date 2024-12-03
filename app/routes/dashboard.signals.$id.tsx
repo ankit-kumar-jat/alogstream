@@ -3,7 +3,14 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node'
 import { data } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import { Copy, Pen } from 'lucide-react'
+import { useState } from 'react'
 import { Button } from '~/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '~/components/ui/tooltip'
 import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
 import { isIn } from '~/lib/utils'
@@ -23,6 +30,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const url = new URL(request.url)
   const webhookURL = `https://${url.hostname}/webhook/signal?key=${signal.id}`
   const webhookPayload = `{"txnType": "{{strategy.order.action}}"}`
+  const webhookBuyPayload = `{"txnType": "BUY"}`
+  const webhookSellPayload = `{"txnType": "SELL"}`
 
   return {
     signal: {
@@ -32,6 +41,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       stopLossValue: signal.stopLossValue.toString(),
       webhookURL,
       webhookPayload,
+      webhookBuyPayload,
+      webhookSellPayload,
     },
   }
 }
@@ -70,15 +81,6 @@ export default function TradeSignals() {
       </div>
     )
   }
-
-  const onCopyWebhookURL = () => {
-    navigator.clipboard.writeText(signal.webhookURL)
-  }
-
-  const onCopyWebhookPayload = () => {
-    navigator.clipboard.writeText(signal.webhookPayload)
-  }
-
   return (
     <div className="container mx-auto my-10 max-w-3xl space-y-4 px-4">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -129,29 +131,63 @@ export default function TradeSignals() {
       </div>
       <div className="space-y-2">
         <h2 className="text-lg font-medium">TradingView Link</h2>
-        <pre className="relative rounded-lg bg-muted p-2">
-          {signal.webhookURL}
-          <Button
-            className="absolute right-0 top-0"
-            onClick={onCopyWebhookURL}
-            size="icon"
-            variant="ghost"
-          >
-            <Copy />
-          </Button>
-        </pre>
-        <pre className="relative rounded-lg bg-muted p-2">
-          {signal.webhookPayload}
-          <Button
-            className="absolute right-0 top-0"
-            onClick={onCopyWebhookPayload}
-            size="icon"
-            variant="ghost"
-          >
-            <Copy />
-          </Button>
-        </pre>
+        <div className="sm:col-span-2">
+          <p className="text-sm text-muted-foreground">Webhook URL</p>
+          <CopyBox data={signal.webhookURL} />
+        </div>
+        <div className="sm:col-span-2">
+          <p className="text-sm text-muted-foreground">Message</p>
+          <CopyBox data={signal.webhookPayload} />
+        </div>
+        <div className="sm:col-span-2">
+          <p className="text-sm text-muted-foreground">Buy only Message</p>
+          <CopyBox data={signal.webhookBuyPayload} />
+        </div>
+        <div className="sm:col-span-2">
+          <p className="text-sm text-muted-foreground">Sell only Message</p>
+          <CopyBox data={signal.webhookSellPayload} />
+        </div>
       </div>
+    </div>
+  )
+}
+
+function CopyBox({ data }: { data: string }) {
+  const [open, setOpen] = useState(false)
+
+  const showTooltip = () => {
+    setOpen(true)
+    setTimeout(() => setOpen(false), 1000)
+  }
+
+  const copyToClipboard = (value: string) => {
+    navigator.clipboard.writeText(value)
+    showTooltip()
+  }
+
+  return (
+    <div className="relative">
+      <pre className="overflow-x-auto rounded-lg bg-muted p-2 pr-10">
+        {data}
+      </pre>
+      <TooltipProvider>
+        <Tooltip open={open}>
+          <TooltipTrigger asChild>
+            <Button
+              className="absolute right-0 top-0"
+              onClick={() => copyToClipboard(data)}
+              size="icon"
+              variant="ghost"
+              title="Click to Copy"
+            >
+              <Copy />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Copied!</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   )
 }
