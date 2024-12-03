@@ -10,10 +10,10 @@
     "start": "cross-env NODE_ENV=production node ./server.js",
     "deploy": "npm run prisma:migrate && cross-env NODE_ENV=production node ./server.js",
     "typecheck": "tsc",
-    "prisma:studio": "prisma studio",
-    "prisma:migrate-dev": "prisma migrate dev",
-    "prisma:migrate": "prisma migrate deploy",
-    "prisma:migrate-status": "prisma migrate status"
+    "prisma:studio": "npx prisma@5.1.0 studio",
+    "prisma:migrate-dev": "npx prisma@5.1.0 migrate dev",
+    "prisma:migrate": "npx prisma@5.1.0 migrate deploy",
+    "prisma:migrate-status": "npx prisma@5.1.0 migrate status"
   },
   "dependencies": {
     "@conform-to/react": "^1.2.2",
