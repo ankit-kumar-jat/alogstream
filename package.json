@@ -12,7 +12,7 @@
     "typecheck": "tsc",
     "prisma:studio": "npx prisma studio",
     "prisma:migrate-dev": "npx prisma migrate dev",
-    "prisma:migrate": "npx prisma migrate deploy",
+    "prisma:migrate": "npx prisma migrate dev",
     "prisma:migrate-status": "npx prisma migrate status"
   },
   "dependencies": {
