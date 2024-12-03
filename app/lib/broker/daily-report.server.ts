@@ -8,9 +8,7 @@ const BATCH_SIZE = 10
 export async function processAllUserPositions() {
   console.log(
     '🚀 ~ DailyReport generation started:',
-    new Date(
-      new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
-    ).toLocaleString(),
+    new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
   )
 
   // TODO: add pagination if user increases
@@ -34,9 +32,7 @@ export async function processAllUserPositions() {
 
   console.log(
     '🚀 ~ DailyReport generation completed:',
-    new Date(
-      new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
-    ).toLocaleString(),
+    new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
   )
 }
 

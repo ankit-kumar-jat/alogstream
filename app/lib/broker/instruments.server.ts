@@ -11,6 +11,8 @@ interface Instrument {
   instrumenttype?: string
   exch_seg: Exchange
   tick_size: string
+  lotsize: string
+  strike: string
 }
 
 export async function getInstruments() {
@@ -38,12 +40,24 @@ export async function saveInstumentsIntoDB() {
       expiry: instrument.expiry,
       type: instrument.instrumenttype,
       exchange: instrument.exch_seg,
+      tickSize: instrument.tick_size,
+      lotSize: parseInt(instrument.lotsize, 10),
     })),
     skipDuplicates: true,
   })
 }
 
 export async function updateInstumentsIntoDB() {
+  console.log(
+    '🚀 ~ Update Instuments List Started:',
+    new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
+  )
+
   await db.instrument.deleteMany({})
   await saveInstumentsIntoDB()
+
+  console.log(
+    '🚀 ~ Update Instuments List Completed:',
+    new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
+  )
 }
