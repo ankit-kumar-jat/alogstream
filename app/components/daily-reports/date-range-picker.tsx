@@ -18,8 +18,8 @@ export function CalendarDateRangePicker({
   className,
 }: React.HTMLAttributes<HTMLDivElement>) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const from = parseInt(searchParams.get('from') ?? '', 10)
-  const to = parseInt(searchParams.get('to') ?? '', 10)
+  const from = searchParams.get('from')
+  const to = searchParams.get('to')
 
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: from ? new Date(from) : addDays(new Date(), -1),
@@ -35,8 +35,8 @@ export function CalendarDateRangePicker({
           return prev
         }
 
-        prev.set('from', range.from.valueOf().toString())
-        prev.set('to', range.to.valueOf().toString())
+        prev.set('from', format(range.from, 'yyyy-MM-dd'))
+        prev.set('to', format(range.to, 'yyyy-MM-dd'))
 
         return prev
       },

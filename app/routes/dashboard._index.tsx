@@ -56,13 +56,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
     ? brokerAccounts?.find(acc => acc.id == brokerAccountId)
     : brokerAccounts?.[0]
 
-  const from = parseInt(url.searchParams.get('from') ?? '', 10)
-  const to = parseInt(url.searchParams.get('to') ?? '', 10)
+  const from = url.searchParams.get('from')
+  const to = url.searchParams.get('to')
 
   const fromDate = from ? new Date(from) : addDays(new Date(), -1)
   const toDate = to ? new Date(to) : addDays(new Date(), -1)
   fromDate.setHours(0, 0, 0)
   toDate.setHours(24, 0, 0)
+  console.log('🚀 ~ loader ~ fromDate:', fromDate, from)
+  console.log('🚀 ~ loader ~ toDate:', toDate, to)
 
   const whereCondition = {
     userId,
@@ -161,7 +163,7 @@ export default function Dashboard() {
             <div
               className={cn(
                 'text-2xl font-bold',
-                isProfitable ? 'text-green-600' : 'text-green-600',
+                isProfitable ? 'text-green-600' : 'text-red-600',
               )}
             >
               {pnl}
