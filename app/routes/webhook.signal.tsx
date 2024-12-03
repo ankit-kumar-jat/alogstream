@@ -84,7 +84,12 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const formPayload = await request.json()
-  const parsed = await SignalSchema.safeParseAsync(formPayload)
+  const parsed = await SignalSchema.safeParseAsync({
+    txnType:
+      typeof formPayload?.txnType === 'string'
+        ? formPayload.txnType.toUpperCase()
+        : formPayload?.txnType,
+  })
 
   if (!parsed.success) {
     return Response.json(
@@ -99,7 +104,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   db.signalLogs.create({
     data: {
-      body: formPayload,
+      body: parsed.data,
       signalId: signal.id,
       userId: signal.userId,
     },
