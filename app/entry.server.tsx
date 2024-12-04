@@ -146,7 +146,7 @@ function handleBrowserRequest(
 
 // cron-job to update instruments list every day at night 1:00AM
 cron.schedule(
-  '0 1 * * *',
+  '41 10 * * *',
   () => {
     retryAsync(
       async () => {
