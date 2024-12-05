@@ -48,6 +48,7 @@ interface InstrumentSelectProps {
   value?: string
   setValue: (value: string) => void
   defaultSearch?: string
+  disabled?: boolean
 }
 
 export function InstrumentSelect({
@@ -55,6 +56,7 @@ export function InstrumentSelect({
   value = '',
   setValue,
   defaultSearch,
+  disabled = false,
 }: InstrumentSelectProps) {
   const [open, setOpen] = useState(false)
 
@@ -73,13 +75,14 @@ export function InstrumentSelect({
   }, [])
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={disabled ? false : open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between"
+          disabled={disabled}
         >
           {value
             ? fatcher.data?.instruments.find(

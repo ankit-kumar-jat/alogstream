@@ -140,9 +140,6 @@ export async function action({ request }: ActionFunctionArgs) {
   const payload = {
     name,
     description,
-    exchange: symbolDetails.exchange,
-    tickerSymbol: symbolDetails.symbol,
-    tickerSymbolToken: symbolDetails.token,
     type: 'INTRADAY',
     stopLossValue,
     targetStopLossType,
@@ -162,7 +159,12 @@ export async function action({ request }: ActionFunctionArgs) {
     })
   } else {
     await db.signal.create({
-      data: payload,
+      data: {
+        ...payload,
+        exchange: symbolDetails.exchange,
+        tickerSymbol: symbolDetails.symbol,
+        tickerSymbolToken: symbolDetails.token,
+      },
     })
   }
 
@@ -236,6 +238,7 @@ export default function TradeSignals() {
             <Select
               onValueChange={exchangeSelectControl.change}
               defaultValue={exchangeSelectControl.value}
+              disabled={Boolean(signal?.id)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Exchange" />
@@ -260,6 +263,7 @@ export default function TradeSignals() {
               value={symbolSelectControl.value}
               setValue={symbolSelectControl.change}
               defaultSearch={signal?.tickerSymbol}
+              disabled={Boolean(signal?.id)}
             />
           </FormField>
           <InputField
