@@ -1,36 +1,34 @@
 import { getToken } from '~/lib/broker/angleone.server'
 import { db } from '~/lib/db.server'
 import { getLTPData, placeOrder } from './order.server'
-import type { TxnType } from '~/types/angleone'
+import type { OrderType, TxnType } from '~/types/angleone'
 import type { Exchange, TargetStopLossType } from '@prisma/client'
 import { getPositions } from './portfolio.server'
 
 interface ProcessOrderOptions {
   brokerAccountId: string
   userId: string
+  clientId: string
   signalId: string
   txnType: TxnType
   exchange: Exchange
   qty: number
-  stopLoss: number
-  target: number
+  lotSize: number
   symbol: string
   symbolToken: string
-  targetStopLossType: TargetStopLossType
 }
 
 export async function processOrder({
   brokerAccountId,
   userId,
+  clientId,
   signalId,
   txnType,
   exchange,
   qty,
-  stopLoss,
-  target,
+  lotSize,
   symbol,
   symbolToken,
-  targetStopLossType,
 }: ProcessOrderOptions) {
   const { data: tokens, error } = await getToken({ brokerAccountId, userId })
   if (error || !tokens) {
@@ -51,30 +49,10 @@ export async function processOrder({
     return null
   }
 
-  const ltpData = await getLTPData({
-    authToken: tokens.authToken,
-    exchange,
-    symbol,
-    symbolToken,
-  })
-
-  if (!ltpData) {
-    throw new Error('Unable to fetch created order.')
-  }
-
-  const price = parseFloat(ltpData.ltp)
-
-  const { targetPrice, stopLossPrice } = calculateTargetAndStoplossPrice({
-    price,
-    target,
-    stopLoss,
-    targetStopLossType,
-  })
-
   const orderRes = await placeOrder({
     authToken: tokens.authToken,
-    variety: 'ROBO',
-    ordertype: 'LIMIT',
+    variety: 'NORMAL',
+    ordertype: 'MARKET',
     producttype: 'INTRADAY',
     duration: 'DAY',
     exchange: exchange,
@@ -82,10 +60,10 @@ export async function processOrder({
     symboltoken: symbolToken,
     transactiontype: txnType,
     quantity: qty,
-    price: price.toFixed(2),
+    price: '0',
     triggerprice: '0',
-    squareoff: targetPrice.toFixed(2),
-    stoploss: stopLossPrice.toFixed(2),
+    squareoff: '0',
+    stoploss: '0',
     ordertag: 'ALS',
   })
 
@@ -95,17 +73,27 @@ export async function processOrder({
     throw new Error('Unable to create order.')
   }
 
-  return await db.order.create({
+  return await db.orderHistory.create({
     data: {
       brokerOrderId: orderRes.orderid,
       brokerUniqueOrderId: orderRes.uniqueorderid,
-      qty,
-      pendingQty: qty,
-      status: 'PENDING',
-      type: txnType,
+      clientId,
+
       price: 0,
-      profitLoss: 0,
-      brokrage: 0,
+      qty,
+      lotSize,
+      filledShares: 0,
+      unfilledShares: qty * lotSize,
+      txnType,
+      status: 'PENDING',
+      variety: 'NORMAL',
+      orderType: 'MARKET',
+      productType: 'INTRADAY',
+
+      exchange,
+      symbol,
+      symbolToken,
+
       userId,
       signalId,
       brokerAccountId,
@@ -113,23 +101,42 @@ export async function processOrder({
   })
 }
 
-function calculateTargetAndStoplossPrice({
+export function calculateTargetAndStoplossPrice({
   price,
   target,
   stopLoss,
   targetStopLossType,
+  txnType,
 }: {
   price: number
   target: number
   stopLoss: number
   targetStopLossType: TargetStopLossType
+  txnType: TxnType
 }) {
+  let targetPrice = 0
+  let stopLossPrice = 0
   if (targetStopLossType === 'PERCENTAGE') {
-    const targetPrice = (price * target) / 100
-    const stopLossPrice = (price * stopLoss) / 100
-
-    return { targetPrice, stopLossPrice }
+    targetPrice = roundOff((price * target) / 100)
+    stopLossPrice = roundOff((price * stopLoss) / 100)
+  } else {
+    targetPrice = roundOff(target)
+    stopLossPrice = roundOff(stopLoss)
   }
 
-  return { targetPrice: target, stopLossPrice: stopLoss }
+  if (txnType === 'BUY') {
+    return {
+      targetPrice: price + targetPrice,
+      stopLossPrice: price - stopLossPrice,
+    }
+  } else {
+    return {
+      targetPrice: price - targetPrice,
+      stopLossPrice: price + stopLossPrice,
+    }
+  }
+}
+
+function roundOff(value: number) {
+  return Math.round(value / 0.05) * 0.05
 }

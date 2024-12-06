@@ -35,9 +35,9 @@ export interface AngleonePlaceOrderRes {
 }
 
 export interface AngleoneOrder {
-  variety: string
-  ordertype: string
-  producttype: string
+  variety: OrderVariety
+  ordertype: OrderType
+  producttype: ProductType
   duration: string
   price: string
   triggerprice: string
@@ -47,7 +47,7 @@ export interface AngleoneOrder {
   stoploss: string
   trailingstoploss: string
   tradingsymbol: string
-  transactiontype: string
+  transactiontype: TxnType
   exchange: Exchange
   symboltoken: any
   instrumenttype: string
@@ -59,7 +59,7 @@ export interface AngleoneOrder {
   averageprice: string
   filledshares: string
   unfilledshares: string
-  orderid: number
+  orderid: string
   text: string
   status: string
   orderstatus: string
@@ -71,6 +71,8 @@ export interface AngleoneOrder {
   parentorderid: string
   uniqueorderid: string
   exchangeorderid: string
+  ordertag: string
+  clientcode: string
 }
 
 export interface AngleoneTrade {

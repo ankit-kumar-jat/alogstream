@@ -164,6 +164,7 @@ export async function action({ request }: ActionFunctionArgs) {
         exchange: symbolDetails.exchange,
         tickerSymbol: symbolDetails.symbol,
         tickerSymbolToken: symbolDetails.token,
+        lotSize: symbolDetails.lotSize,
       },
     })
   }

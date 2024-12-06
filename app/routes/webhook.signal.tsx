@@ -71,7 +71,7 @@ export async function action({ request }: ActionFunctionArgs) {
     where: { id: key },
     include: {
       brokerAccounts: {
-        select: { id: true },
+        select: { id: true, clientId: true },
       },
     },
   })
@@ -123,21 +123,20 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   signal.brokerAccounts.map(
-    async ({ id }) =>
+    async ({ id, clientId }) =>
       await retryAsync(
         async () => {
           await processOrder({
             brokerAccountId: id,
+            clientId,
             userId: signal.userId,
             signalId: signal.id,
             txnType: parsed.data.txnType,
             exchange: signal.exchange,
             qty: signal.size,
-            stopLoss: signal.stopLossValue.toNumber(),
-            target: signal.takeProfitValue.toNumber(),
+            lotSize: signal.lotSize,
             symbol: signal.tickerSymbol,
             symbolToken: signal.tickerSymbolToken,
-            targetStopLossType: signal.targetStopLossType,
           })
         },
         { delay: 1000, maxTry: 2 },

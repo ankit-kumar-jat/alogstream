@@ -26,11 +26,11 @@ model User {
   sessions         Session[]
   BrokerAccount    BrokerAccount[]
   Signal           Signal[]
-  Order            Order[]
   Strategy         Strategy[]
   DailyTradeReport DailyTradeReport[]
   SignalLogs       SignalLogs[]
   UserNotification UserNotification[]
+  OrderHistory     OrderHistory[]
 }
 
 model Password {
@@ -71,26 +71,33 @@ model BrokerAccount {
   userId String
 
   signals          Signal[]
-  Order            Order[]
   DailyTradeReport DailyTradeReport[]
+  OrderHistory     OrderHistory[]
 
   @@unique([userId, clientId], name: "brokerAccountIdentifier")
 }
 
-model Order {
+model OrderHistory {
   id String @id @default(cuid())
 
-  brokerOrderId       String
-  brokerUniqueOrderId String
+  brokerOrderId       String @unique
+  brokerUniqueOrderId String @unique
+  clientId            String // clientCode of broker account
 
-  qty        Int
-  pendingQty Int // pending shares
-  status     String // PENDING, CLOSED
-  type       OrderType // BUY, SELL
-
-  price      Decimal?
-  profitLoss Decimal?
-  brokrage   Decimal?
+  price          Decimal?
+  avgPrice       Decimal?
+  qty            Int
+  lotSize        Int
+  filledShares   Int
+  unfilledShares Int
+  status         OrderStatus // PENDING, OPEN, EXECUTED, REJECTED
+  txnType        TxnType // BUY, SELL
+  variety        OrderVariety
+  orderType      BrokerOrderType
+  productType    ProductType
+  exchange       Exchange
+  symbol         String
+  symbolToken    String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -104,7 +111,11 @@ model Order {
   brokerAccount   BrokerAccount @relation(fields: [brokerAccountId], references: [id], onDelete: Cascade)
   brokerAccountId String
 
-  @@unique([brokerOrderId, brokerUniqueOrderId], name: "orderIdentifier")
+  parentOrderId String?
+  parentOrder   OrderHistory?  @relation("ParentOrderHistory", fields: [parentOrderId], references: [id])
+  parentOrders  OrderHistory[] @relation("ParentOrderHistory")
+
+  @@unique([brokerOrderId, clientId], name: "orderIdentifier")
 }
 
 // strategy is the one that generates signals 
@@ -140,7 +151,8 @@ model Signal {
   targetStopLossType TargetStopLossType //  POINTS or PERCENTAGE
   takeProfitValue    Decimal
   stopLossValue      Decimal
-  size               Int // how many shares to buy
+  size               Int // how many lots/shares to buy
+  lotSize            Int                @default(1) // Maximum number of orders in same direction
   pyramiding         Int                @default(1) // Maximum number of orders in same direction
 
   createdAt DateTime @default(now())
@@ -150,9 +162,9 @@ model Signal {
 
   user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId           String
-  Order            Order[]
   SignalLogs       SignalLogs[]
   UserNotification UserNotification[]
+  OrderHistory     OrderHistory[]
 }
 
 model DailyTradeReport {
@@ -253,7 +265,37 @@ enum TargetStopLossType {
   PERCENTAGE
 }
 
-enum OrderType {
+enum TxnType {
   BUY
   SELL
+}
+
+enum OrderVariety {
+  NORMAL
+  STOPLOSS
+  AMO
+  ROBO
+}
+
+enum BrokerOrderType {
+  MARKET
+  LIMIT
+  STOPLOSS_LIMIT
+  STOPLOSS_MARKET
+}
+
+enum OrderStatus {
+  PENDING
+  TRIGGER_PENDING
+  OPEN
+  EXECUTED
+  CANCELED
+}
+
+enum ProductType {
+  DELIVERY
+  CARRYFORWARD
+  MARGIN
+  INTRADAY
+  BO
 }
