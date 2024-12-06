@@ -21,7 +21,6 @@ import {
   InputField,
   TextareaField,
 } from '~/components/ui/input-field'
-import { Label } from '~/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -29,8 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
-import { getToken } from '~/lib/broker/angleone.server'
-import { getSymbolToken } from '~/lib/broker/order.server'
 import { InstrumentSelect } from './resources.search-instrument'
 import { Exchange } from '~/types/angleone'
 
@@ -38,7 +35,7 @@ const SignalFormSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   // label: z.string().optional(),
-  exchange: z.enum(['NSE', 'BSE', 'NFO']),
+  exchange: z.enum(['NSE', 'BSE', 'NFO', 'BFO']),
   symbol: z.string(),
   targetStopLossType: z.enum(['POINTS', 'PERCENTAGE']),
   takeProfitValue: z.number().gt(0),
@@ -74,7 +71,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const exchangeOptions = [
     { title: 'NSE', value: 'NSE' },
     { title: 'BSE', value: 'BSE' },
-    // { title: 'NFO', value: 'NFO' },
+    { title: 'NFO', value: 'NFO' },
+    // { title: 'BFO', value: 'BFO' },
   ]
 
   const slTypeOptions = [
