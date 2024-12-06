@@ -122,8 +122,7 @@ export async function action({ request }: ActionFunctionArgs) {
       // close the order as SL or TG already hit
       if (isStoplossAlreadyHit || isTargetAlreadyHit) {
         console.log(
-          '🚀 ~ order-postback: closing order as SL or TG already hit : parentOrderId:',
-          existingOrder.id,
+          `🚀 ~ order-postback: closing order as SL or TG already hit ~ LTP: ${ltpPrice} ~ SL: ${stopLossPrice} ~ TG: ${targetPrice} ~ parentOrderId: ${existingOrder.id}`,
         )
         //Creates Market order with parentOrderId to close the parent order
         await retryAsync(async () => {
