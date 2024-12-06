@@ -87,7 +87,7 @@ export async function action({ request }: ActionFunctionArgs) {
       }
 
       const { stopLossPrice, targetPrice } = calculateTargetAndStoplossPrice({
-        price: parseFloat(formPayload.price),
+        price: parseFloat(formPayload.averageprice),
         target: signal.takeProfitValue.toNumber(),
         stopLoss: signal.stopLossValue.toNumber(),
         targetStopLossType: signal.targetStopLossType,
