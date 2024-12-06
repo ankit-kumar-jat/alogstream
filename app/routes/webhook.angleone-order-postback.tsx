@@ -115,8 +115,14 @@ export async function action({ request }: ActionFunctionArgs) {
       }
 
       const ltpPrice = parseFloat(ltpData.ltp)
-      const isStoplossAlreadyHit = stopLossPrice >= ltpPrice
-      const isTargetAlreadyHit = targetPrice <= ltpPrice
+      const isStoplossAlreadyHit =
+        existingOrder.txnType === 'BUY'
+          ? stopLossPrice >= ltpPrice
+          : stopLossPrice <= ltpPrice
+      const isTargetAlreadyHit =
+        existingOrder.txnType === 'BUY'
+          ? targetPrice <= ltpPrice
+          : targetPrice >= ltpPrice
 
       const txnTypeForSLTG = existingOrder.txnType === 'BUY' ? 'SELL' : 'BUY'
 
