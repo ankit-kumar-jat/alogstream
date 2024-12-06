@@ -113,6 +113,9 @@ export function calculateTargetAndStoplossPrice({
   targetStopLossType: TargetStopLossType
   txnType: TxnType
 }) {
+  console.log(
+    `🚀 ~ calculating TGPrice&SLPrice ~ price: ${price} ~ TG: ${target} ~ SL: ${stopLoss} `,
+  )
   let targetPrice = 0
   let stopLossPrice = 0
   if (targetStopLossType === 'PERCENTAGE') {
