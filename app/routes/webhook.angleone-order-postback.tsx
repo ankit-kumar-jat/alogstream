@@ -121,6 +121,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
       // close the order as SL or TG already hit
       if (isStoplossAlreadyHit || isTargetAlreadyHit) {
+        console.log(
+          '🚀 ~ order-postback: closing order as SL or TG already hit : parentOrderId:',
+          existingOrder.id,
+        )
         //Creates Market order with parentOrderId to close the parent order
         await retryAsync(async () => {
           const orderRes = await placeOrder({
@@ -139,7 +143,6 @@ export async function action({ request }: ActionFunctionArgs) {
             triggerprice: '0',
             squareoff: '0',
             stoploss: '0',
-            ordertag: 'ALS',
           })
 
           if (!orderRes) {
@@ -182,6 +185,10 @@ export async function action({ request }: ActionFunctionArgs) {
       }
 
       //Creates SL order with parentOrderId
+      console.log(
+        '🚀 ~ order-postback: Creating SL order : parentOrderId:',
+        existingOrder.id,
+      )
       await retryAsync(
         async () => {
           const orderRes = await placeOrder({
@@ -199,7 +206,6 @@ export async function action({ request }: ActionFunctionArgs) {
             triggerprice: stopLossPrice.toFixed(2),
             squareoff: '0',
             stoploss: '0',
-            ordertag: 'ALS',
           })
 
           if (!orderRes) {
@@ -240,6 +246,10 @@ export async function action({ request }: ActionFunctionArgs) {
       )
 
       //Creates TG order with parentOrderId
+      console.log(
+        '🚀 ~ order-postback: Creating TG order: parentOrderId:',
+        existingOrder.id,
+      )
       await retryAsync(
         async () => {
           const orderRes = await placeOrder({
@@ -257,7 +267,6 @@ export async function action({ request }: ActionFunctionArgs) {
             triggerprice: '0',
             squareoff: '0',
             stoploss: '0',
-            ordertag: 'ALS',
           })
 
           if (!orderRes) {
@@ -308,6 +317,10 @@ export async function action({ request }: ActionFunctionArgs) {
       newOrderStatus === 'EXECUTED' &&
       existingOrder.parentOrderId
     ) {
+      console.log(
+        '🚀 ~ order-postback: SL or TG executed : canceling other orders : parentOrderId:',
+        existingOrder.id,
+      )
       const allChildOrders = await db.orderHistory.findMany({
         where: {
           parentOrderId: existingOrder.parentOrderId,

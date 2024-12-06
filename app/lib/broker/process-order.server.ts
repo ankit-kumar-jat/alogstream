@@ -64,7 +64,6 @@ export async function processOrder({
     triggerprice: '0',
     squareoff: '0',
     stoploss: '0',
-    ordertag: 'ALS',
   })
 
   console.log('🚀 ~ orderRes:', orderRes)

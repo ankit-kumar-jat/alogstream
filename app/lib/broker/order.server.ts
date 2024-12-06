@@ -32,6 +32,7 @@ interface PlaceOrderReq {
 
 export async function placeOrder({
   authToken,
+  ordertag = 'ALS',
   ...body
 }: {
   authToken: string
