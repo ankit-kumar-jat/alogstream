@@ -76,7 +76,7 @@ export async function action({ request }: ActionFunctionArgs) {
       newOrderStatus === 'EXECUTED' &&
       !existingOrder.parentOrderId
     ) {
-      console.log('🚀 ~ order-postback ~ formPayload:', formPayload)
+      // console.log('🚀 ~ order-postback ~ formPayload:', formPayload)
       const signal = await db.signal.findUnique({
         where: { id: existingOrder.signalId, userId: existingOrder.userId },
       })

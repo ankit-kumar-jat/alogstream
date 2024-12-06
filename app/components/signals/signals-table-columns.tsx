@@ -50,7 +50,7 @@ export const columns: ColumnDef<ModifiedSignal>[] = [
       <DataTableColumnHeader column={column} title="Symbol" />
     ),
     cell: ({ row }) => (
-      <div className="w-[80px]">{row.getValue('tickerSymbol')}</div>
+      <div className="w-[100px]">{row.getValue('tickerSymbol')}</div>
     ),
   },
   {

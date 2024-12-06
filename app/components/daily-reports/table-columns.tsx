@@ -32,7 +32,9 @@ export const columns: ColumnDef<ModifiedDailyReport>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Symbol" />
     ),
-    cell: ({ row }) => <div>{row.getValue('symbol')}</div>,
+    cell: ({ row }) => (
+      <div className="w-[100px]">{row.getValue('symbol')}</div>
+    ),
   },
   {
     accessorKey: 'buyQty',
