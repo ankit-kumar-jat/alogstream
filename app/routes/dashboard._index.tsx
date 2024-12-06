@@ -59,8 +59,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const from = url.searchParams.get('from')
   const to = url.searchParams.get('to')
 
-  const fromDate = from ? new Date(from) : addDays(new Date(), -1)
-  const toDate = to ? new Date(to) : addDays(new Date(), -1)
+  const fromDate = from ? new Date(from) : addDays(new Date(), -6)
+  const toDate = to ? new Date(to) : new Date()
   fromDate.setHours(0, 0, 0)
   toDate.setHours(24, 0, 0)
   console.log('🚀 ~ loader ~ fromDate:', fromDate, from)

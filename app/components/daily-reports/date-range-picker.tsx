@@ -22,8 +22,8 @@ export function CalendarDateRangePicker({
   const to = searchParams.get('to')
 
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: from ? new Date(from) : addDays(new Date(), -1),
-    to: to ? new Date(to) : addDays(new Date(), -1),
+    from: from ? new Date(from) : addDays(new Date(), -6),
+    to: to ? new Date(to) : new Date(),
   })
 
   const updateSearchParams = useDebounce((range: DateRange | undefined) => {
