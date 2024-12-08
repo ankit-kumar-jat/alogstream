@@ -20,6 +20,10 @@ services:
     volumes:
       - 'letsencrypt:/letsencrypt'
       - '/var/run/docker.sock:/var/run/docker.sock:ro'
+    deploy:
+      resources:
+        limits: { cpus: '0.2', memory: '200M' }
+        reservations: { cpus: '0.1', memory: '100M' }
 
   web:
     image: ghcr.io/ankit-kumar-jat/alogstream:${GIT_COMMIT_HASH:-latest}
@@ -37,6 +41,9 @@ services:
     deploy:
       update_config:
         order: start-first
+      resources:
+        limits: { cpus: '0.9', memory: '900M' }
+        reservations: { cpus: '0.6', memory: '600M' }
 
   # following is used to cleanup unused docker images and containers as it can fill up storage very fast
   swarm-cleanup:
