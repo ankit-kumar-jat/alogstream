@@ -84,12 +84,14 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const formPayload = await request.json()
+  console.log('🚀 ~ action ~ formPayload:', formPayload)
   const parsed = await SignalSchema.safeParseAsync({
     txnType:
       typeof formPayload?.txnType === 'string'
         ? formPayload.txnType.toUpperCase()
         : formPayload?.txnType,
   })
+  console.log('🚀 ~ action ~ parsed:', parsed)
 
   if (!parsed.success) {
     return Response.json(
