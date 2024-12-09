@@ -43,7 +43,7 @@ services:
         order: start-first
       resources:
         limits: { cpus: '0.9', memory: '900M' }
-        reservations: { cpus: '0.6', memory: '400M' }
+        reservations: { cpus: '0.3', memory: '300M' }
 
   # following is used to cleanup unused docker images and containers as it can fill up storage very fast
   swarm-cleanup:
