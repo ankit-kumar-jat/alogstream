@@ -4,6 +4,7 @@ import { addDays } from 'date-fns'
 import { CalendarDateRangePicker } from '~/components/daily-reports/date-range-picker'
 import { columns } from '~/components/daily-reports/table-columns'
 import { DataTable } from '~/components/data-table'
+import { TablePagination } from '~/components/data-table/pagination'
 import {
   Select,
   SelectContent,
@@ -108,7 +109,11 @@ export default function Reports() {
         <div className="w-full max-w-60">
           <CalendarDateRangePicker />
         </div>
-        <DataTable data={reports} columns={columns} />
+        <DataTable
+          data={reports}
+          columns={columns}
+          pagination={table => <TablePagination table={table} />}
+        />
       </div>
     </div>
   )

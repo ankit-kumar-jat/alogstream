@@ -4,10 +4,14 @@ import { db } from '~/lib/db.server'
 import { requireUserId } from '~/lib/auth.server'
 import { DataTable } from '~/components/data-table'
 import { columns } from '~/components/orders/table-columns'
+import { TablePagination } from '~/components/data-table/pagination'
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await requireUserId(request)
-  const orderHistory = await db.orderHistory.findMany({ where: { userId } })
+  const orderHistory = await db.orderHistory.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+  })
 
   return {
     orderHistory: orderHistory.map(order => ({
@@ -32,7 +36,7 @@ export default function Orders() {
           data={orderHistory}
           columns={columns}
           //   toolbar={table => <SignalTableToolbar table={table} />}
-          //   pagination={table => <SignalTablePagination table={table} />}
+          pagination={table => <TablePagination table={table} />}
         />
       </div>
     </div>

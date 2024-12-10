@@ -15,13 +15,11 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 
-interface SignalTablePaginationProps<TData> {
+interface TablePaginationProps<TData> {
   table: Table<TData>
 }
 
-export function SignalTablePagination<TData>({
-  table,
-}: SignalTablePaginationProps<TData>) {
+export function TablePagination<TData>({ table }: TablePaginationProps<TData>) {
   return (
     <div className="flex items-center justify-between px-2">
       <div className="flex-1 text-sm text-muted-foreground">
