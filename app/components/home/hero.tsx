@@ -70,10 +70,11 @@ function Hero() {
               Automate Your Trades, Seamlessly
             </h1>
             <p className="mt-8 text-pretty text-lg font-medium text-gray-500 sm:text-xl/8">
-              Effortlessly automate your trades by connecting TradingView alerts
-              to your AgleOne account. Simplify strategy execution and seize
-              every opportunity.
+              Effortlessly fully automate your trades by connecting TradingView
+              strategy alerts to your AngelOne account. Simplify strategy
+              execution and seize every opportunity.
             </p>
+
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Button asChild>
                 <Link to="/login">Get started</Link>
@@ -85,6 +86,10 @@ function Hero() {
               </Button>
             </div>
           </div>
+          <p className="mt-8 text-pretty text-center text-xs text-gray-500 sm:text-sm/8">
+            <sup>*</sup>Profits and losses are not assured, Investments in
+            securities market are subject to market risks.
+          </p>
         </div>
         <div
           className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
