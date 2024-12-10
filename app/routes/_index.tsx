@@ -1,5 +1,6 @@
 import type { MetaFunction, LoaderFunctionArgs } from '@remix-run/node'
-import Hero from '~/components/home/hero'
+import { Footer } from '~/components/home/footer'
+import { Hero } from '~/components/home/hero'
 import { SITE_DESCRIPTION, SITE_NAME } from '~/config/site'
 
 export const meta: MetaFunction = () => {
@@ -17,6 +18,7 @@ export default function Index() {
   return (
     <>
       <Hero />
+      <Footer />
     </>
   )
 }

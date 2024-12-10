@@ -3,10 +3,10 @@ import { TrendingUp } from 'lucide-react'
 import { SITE_NAME } from '~/config/site'
 import { Button } from '~/components/ui/button'
 
-function Hero() {
+export function Hero() {
   return (
     <div className="container mx-auto">
-      <header className="absolute inset-x-0 top-0 z-50">
+      <header className="container absolute inset-x-0 top-0 z-50 mx-auto">
         <nav
           className="flex items-center justify-between p-6 lg:px-8"
           aria-label="Global"
@@ -92,7 +92,7 @@ function Hero() {
           </p>
         </div>
         <div
-          className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
+          className="absolute inset-x-0 top-1/4 -z-10 transform-gpu overflow-hidden blur-3xl"
           aria-hidden="true"
         >
           <div
@@ -107,5 +107,3 @@ function Hero() {
     </div>
   )
 }
-
-export default Hero
