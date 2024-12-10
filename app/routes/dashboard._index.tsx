@@ -8,7 +8,7 @@ import {
   TrendingUpDown,
   TrendingUp,
 } from 'lucide-react'
-import { Bar, BarChart, CartesianGrid, Cell, LabelList } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis } from 'recharts'
 import { CalendarDateRangePicker } from '~/components/daily-reports/date-range-picker'
 import {
   Card,
@@ -75,20 +75,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
     },
   }
 
-  const reports = await db.dailyTradeReport.aggregate({
-    where: whereCondition,
-    _sum: {
-      pnl: true,
-    },
-  })
-
-  const pnlReport = await db.dailyTradeReport.groupBy({
-    by: ['symbol'],
-    where: whereCondition,
-    _sum: {
-      pnl: true,
-    },
-  })
+  const [reports, pnlReport] = await Promise.all([
+    await db.dailyTradeReport.aggregate({
+      where: whereCondition,
+      _sum: {
+        pnl: true,
+      },
+    }),
+    await db.dailyTradeReport.groupBy({
+      by: ['symbol'],
+      where: whereCondition,
+      _sum: {
+        pnl: true,
+      },
+    }),
+  ])
 
   return {
     brokerAccounts,
@@ -253,9 +254,16 @@ function Overview({
     <ChartContainer config={chartConfig}>
       <BarChart accessibilityLayer data={chartData}>
         <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="symbol"
+          tickLine={false}
+          tickMargin={10}
+          axisLine={false}
+          hide
+        />
         <ChartTooltip
           cursor={false}
-          content={<ChartTooltipContent hideLabel hideIndicator />}
+          content={<ChartTooltipContent hideIndicator />}
         />
         <Bar dataKey="pnl">
           <LabelList position="top" dataKey="symbol" fillOpacity={1} />
