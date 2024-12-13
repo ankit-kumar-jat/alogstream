@@ -86,6 +86,9 @@ export async function action({ request }: ActionFunctionArgs) {
         return Response.json({ success: true })
       }
 
+      console.log(
+        `🚀 ~ calculating TGPrice&SLPrice ~ price: ${formPayload.tradingsymbol} ${parseFloat(formPayload.averageprice)} ~ TG: ${signal.takeProfitValue.toNumber()} ~ SL: ${signal.stopLossValue.toNumber()} `,
+      )
       const { stopLossPrice, targetPrice } = calculateTargetAndStoplossPrice({
         price: parseFloat(formPayload.averageprice),
         target: signal.takeProfitValue.toNumber(),
@@ -129,7 +132,7 @@ export async function action({ request }: ActionFunctionArgs) {
       // close the order as SL or TG already hit
       if (isStoplossAlreadyHit || isTargetAlreadyHit) {
         console.log(
-          `🚀 ~ order-postback: closing order as SL or TG already hit ~ LTP: ${ltpPrice} ~ SL: ${stopLossPrice} ~ TG: ${targetPrice} ~ parentOrderId: ${existingOrder.id}`,
+          `🚀 ~ order-postback: closing order as SL or TG already hit ~ LTP: ${ltpPrice} ~ SL: ${stopLossPrice} ~ TG: ${targetPrice} ~ parentOrderId: ${existingOrder.id}_${existingOrder.symbol}`,
         )
         //Creates Market order with parentOrderId to close the parent order
         await retryAsync(async () => {
