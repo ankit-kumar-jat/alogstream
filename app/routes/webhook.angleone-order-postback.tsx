@@ -3,7 +3,10 @@ import type { ActionFunctionArgs } from '@remix-run/node'
 import { retryAsync } from 'ts-retry'
 import { getToken } from '~/lib/broker/angleone.server'
 import { cancelOrder, getLTPData, placeOrder } from '~/lib/broker/order.server'
-import { calculateTargetAndStoplossPrice } from '~/lib/broker/process-order.server'
+import {
+  calculateTargetAndStoplossPrice,
+  orderPostbackQueue,
+} from '~/lib/broker/process-order.server'
 import { db } from '~/lib/db.server'
 import { AngleoneOrder } from '~/types/angleone'
 
@@ -135,59 +138,27 @@ export async function action({ request }: ActionFunctionArgs) {
           `🚀 ~ order-postback: closing order as SL or TG already hit ~ LTP: ${ltpPrice} ~ SL: ${stopLossPrice} ~ TG: ${targetPrice} ~ parentOrderId: ${existingOrder.id}_${existingOrder.symbol}`,
         )
         //Creates Market order with parentOrderId to close the parent order
-        await retryAsync(async () => {
-          const orderRes = await placeOrder({
-            authToken: tokens.authToken,
-            variety: 'NORMAL',
-            ordertype: 'MARKET',
-            producttype: 'INTRADAY',
-            duration: 'DAY',
-            exchange: existingOrder.exchange,
-            tradingsymbol: existingOrder.symbol,
-            symboltoken: existingOrder.symbolToken,
-
-            transactiontype: txnTypeForSLTG,
-            quantity: existingOrder.qty,
-            price: '0',
-            triggerprice: '0',
-            squareoff: '0',
-            stoploss: '0',
-          })
-
-          if (!orderRes) {
-            console.log(
-              '🚀 ~ order-postback: unable to exit for stoploss order',
-            )
-            return Response.json({ success: true })
-          }
-          await db.orderHistory.create({
-            data: {
-              brokerOrderId: orderRes.orderid,
-              brokerUniqueOrderId: orderRes.uniqueorderid,
-              clientId: existingOrder.clientId,
-
-              price: 0,
-              qty: existingOrder.qty,
-              lotSize: existingOrder.lotSize,
-              filledShares: 0,
-              unfilledShares: existingOrder.qty * existingOrder.lotSize,
-              txnType: txnTypeForSLTG,
-              status: 'PENDING',
-              variety: 'NORMAL',
-              orderType: 'MARKET',
-              productType: 'INTRADAY',
-
-              exchange: existingOrder.exchange,
-              symbol: existingOrder.symbol,
-              symbolToken: existingOrder.symbolToken,
-
-              userId: existingOrder.userId,
-              signalId: existingOrder.signalId,
-              brokerAccountId: existingOrder.brokerAccountId,
-
-              parentOrderId: existingOrder.id,
-            },
-          })
+        orderPostbackQueue.enqueue({
+          authToken: tokens.authToken,
+          variety: 'NORMAL',
+          orderType: 'MARKET',
+          productType: 'INTRADAY',
+          duration: 'DAY',
+          exchange: existingOrder.exchange,
+          symbol: existingOrder.symbol,
+          symbolToken: existingOrder.symbolToken,
+          txnType: txnTypeForSLTG,
+          qty: existingOrder.qty,
+          price: '0',
+          triggerprice: '0',
+          squareoff: '0',
+          stoploss: '0',
+          lotSize: existingOrder.lotSize,
+          clientId: existingOrder.clientId,
+          userId: existingOrder.userId,
+          signalId: existingOrder.signalId,
+          brokerAccountId: existingOrder.brokerAccountId,
+          parentOrderId: existingOrder.id,
         })
 
         return Response.json({ success: true })
@@ -198,124 +169,55 @@ export async function action({ request }: ActionFunctionArgs) {
         '🚀 ~ order-postback: Creating SL order : parentOrderId:',
         existingOrder.id,
       )
-      await retryAsync(
-        async () => {
-          const orderRes = await placeOrder({
-            authToken: tokens.authToken,
-            variety: 'STOPLOSS',
-            ordertype: 'STOPLOSS_MARKET',
-            producttype: 'INTRADAY',
-            duration: 'DAY',
-            exchange: existingOrder.exchange,
-            tradingsymbol: existingOrder.symbol,
-            symboltoken: existingOrder.symbolToken,
-            transactiontype: txnTypeForSLTG,
-            quantity: sharesToFill,
-            price: '0',
-            triggerprice: stopLossPrice.toFixed(2),
-            squareoff: '0',
-            stoploss: '0',
-          })
-
-          if (!orderRes) {
-            console.log('🚀 ~ order-postback: unable to create stoploss order')
-            throw new Error('Unable to create stoploss order.')
-          }
-
-          await db.orderHistory.create({
-            data: {
-              brokerOrderId: orderRes.orderid,
-              brokerUniqueOrderId: orderRes.uniqueorderid,
-              clientId: existingOrder.clientId,
-
-              price: 0,
-              qty: sharesToFill,
-              lotSize: existingOrder.lotSize,
-              filledShares: 0,
-              unfilledShares: sharesToFill * existingOrder.lotSize,
-              txnType: txnTypeForSLTG,
-              status: 'PENDING',
-              variety: 'STOPLOSS',
-              orderType: 'STOPLOSS_MARKET',
-              productType: 'INTRADAY',
-
-              exchange: existingOrder.exchange,
-              symbol: existingOrder.symbol,
-              symbolToken: existingOrder.symbolToken,
-
-              userId: existingOrder.userId,
-              signalId: existingOrder.signalId,
-              brokerAccountId: existingOrder.brokerAccountId,
-
-              parentOrderId: existingOrder.id,
-            },
-          })
-        },
-        { delay: 100, maxTry: 2 },
-      )
-
+      orderPostbackQueue.enqueue({
+        authToken: tokens.authToken,
+        variety: 'STOPLOSS',
+        orderType: 'STOPLOSS_MARKET',
+        productType: 'INTRADAY',
+        duration: 'DAY',
+        exchange: existingOrder.exchange,
+        symbol: existingOrder.symbol,
+        symbolToken: existingOrder.symbolToken,
+        txnType: txnTypeForSLTG,
+        qty: sharesToFill,
+        price: '0',
+        triggerprice: stopLossPrice.toFixed(2),
+        squareoff: '0',
+        stoploss: '0',
+        lotSize: existingOrder.lotSize,
+        clientId: existingOrder.clientId,
+        userId: existingOrder.userId,
+        signalId: existingOrder.signalId,
+        brokerAccountId: existingOrder.brokerAccountId,
+        parentOrderId: existingOrder.id,
+      })
       //Creates TG order with parentOrderId
       console.log(
         '🚀 ~ order-postback: Creating TG order: parentOrderId:',
         existingOrder.id,
       )
-      await retryAsync(
-        async () => {
-          const orderRes = await placeOrder({
-            authToken: tokens.authToken,
-            variety: 'NORMAL',
-            ordertype: 'LIMIT',
-            producttype: 'INTRADAY',
-            duration: 'DAY',
-            exchange: existingOrder.exchange,
-            tradingsymbol: existingOrder.symbol,
-            symboltoken: existingOrder.symbolToken,
-            transactiontype: txnTypeForSLTG,
-            quantity: sharesToFill,
-            price: targetPrice.toFixed(2),
-            triggerprice: '0',
-            squareoff: '0',
-            stoploss: '0',
-          })
-
-          if (!orderRes) {
-            console.log(
-              '🚀 ~ order-postback: unable to create target limit order',
-            )
-            throw new Error('Unable to create target limit order.')
-          }
-
-          await db.orderHistory.create({
-            data: {
-              brokerOrderId: orderRes.orderid,
-              brokerUniqueOrderId: orderRes.uniqueorderid,
-              clientId: existingOrder.clientId,
-
-              price: targetPrice.toFixed(2),
-              qty: sharesToFill,
-              lotSize: existingOrder.lotSize,
-              filledShares: 0,
-              unfilledShares: sharesToFill * existingOrder.lotSize,
-              txnType: txnTypeForSLTG,
-              status: 'PENDING',
-              variety: 'NORMAL',
-              orderType: 'LIMIT',
-              productType: 'INTRADAY',
-
-              exchange: existingOrder.exchange,
-              symbol: existingOrder.symbol,
-              symbolToken: existingOrder.symbolToken,
-
-              userId: existingOrder.userId,
-              signalId: existingOrder.signalId,
-              brokerAccountId: existingOrder.brokerAccountId,
-
-              parentOrderId: existingOrder.id,
-            },
-          })
-        },
-        { delay: 100, maxTry: 2 },
-      )
+      orderPostbackQueue.enqueue({
+        authToken: tokens.authToken,
+        variety: 'NORMAL',
+        orderType: 'LIMIT',
+        productType: 'INTRADAY',
+        duration: 'DAY',
+        exchange: existingOrder.exchange,
+        symbol: existingOrder.symbol,
+        symbolToken: existingOrder.symbolToken,
+        txnType: txnTypeForSLTG,
+        qty: sharesToFill,
+        price: targetPrice.toFixed(2),
+        triggerprice: '0',
+        squareoff: '0',
+        stoploss: '0',
+        lotSize: existingOrder.lotSize,
+        clientId: existingOrder.clientId,
+        userId: existingOrder.userId,
+        signalId: existingOrder.signalId,
+        brokerAccountId: existingOrder.brokerAccountId,
+        parentOrderId: existingOrder.id,
+      })
     }
 
     if (

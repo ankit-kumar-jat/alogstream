@@ -1,13 +1,19 @@
 import { getToken } from '~/lib/broker/angleone.server'
 import { db } from '~/lib/db.server'
 import { placeOrder } from './order.server'
-import type { TxnType } from '~/types/angleone'
+import type {
+  OrderDuration,
+  OrderType,
+  OrderVariety,
+  ProductType,
+  TxnType,
+} from '~/types/angleone'
 import type { Exchange, TargetStopLossType } from '@prisma/client'
 import { getPositions } from './portfolio.server'
 import { remember } from '@epic-web/remember'
 import { retryAsync } from 'ts-retry'
 
-interface QueueItem {
+interface ProcessOrderOptions {
   brokerAccountId: string
   userId: string
   clientId: string
@@ -18,7 +24,31 @@ interface QueueItem {
   lotSize: number
   symbol: string
   symbolToken: string
+  authToken: string
+  variety: OrderVariety
+  orderType: OrderType
+  productType: ProductType
+  duration?: OrderDuration
+  price?: number | string
+  squareoff?: number | string
+  stoploss?: number | string
+  triggerprice?: number | string
+  parentOrderId?: string
 }
+
+type QueueItem = Pick<
+  ProcessOrderOptions,
+  | 'brokerAccountId'
+  | 'userId'
+  | 'clientId'
+  | 'signalId'
+  | 'txnType'
+  | 'exchange'
+  | 'qty'
+  | 'lotSize'
+  | 'symbol'
+  | 'symbolToken'
+>
 
 class OrderQueue {
   activeWorkers: number
@@ -76,7 +106,38 @@ class OrderQueue {
     )
     await retryAsync(
       async () => {
-        await processOrder(order)
+        const { data: tokens, error } = await getToken({
+          brokerAccountId: order.brokerAccountId,
+          userId: order.userId,
+        })
+        if (error || !tokens) {
+          throw new Error('Unable to fetch token.')
+        }
+
+        const positions = await getPositions({ authToken: tokens.authToken })
+
+        const isPendingTrade = positions?.find(position => {
+          return (
+            position.symboltoken === order.symbolToken &&
+            position.sellqty !== position.buyqty
+          )
+        })
+        console.log(
+          `🚀 ~ isPendingTrade ~ ${order.symbol}: ${Boolean(isPendingTrade)}`,
+        )
+
+        if (isPendingTrade) {
+          return null
+        }
+
+        await placeOrderAndSaveIntoDB({
+          ...order,
+          variety: 'NORMAL',
+          orderType: 'MARKET',
+          productType: 'INTRADAY',
+          duration: 'DAY',
+          authToken: tokens.authToken,
+        })
       },
       { delay: 1000, maxTry: 2 },
     )
@@ -85,99 +146,137 @@ class OrderQueue {
 
 export const orderQueue = remember('order-queue', () => new OrderQueue(10))
 
-interface ProcessOrderOptions {
-  brokerAccountId: string
-  userId: string
-  clientId: string
-  signalId: string
-  txnType: TxnType
-  exchange: Exchange
-  qty: number
-  lotSize: number
-  symbol: string
-  symbolToken: string
+class OrderPostbackQueue {
+  activeWorkers: number
+  queue: ProcessOrderOptions[]
+  stockLocks: Set<string>
+  concurrency: number
+
+  constructor(concurrency: number) {
+    this.queue = []
+    this.stockLocks = new Set() // Tracks stocks currently being processed
+    this.activeWorkers = 0 // Tracks active workers
+    this.concurrency = concurrency // Maximum concurrent stocks
+  }
+
+  public enqueue(order: ProcessOrderOptions) {
+    this.queue.push(order)
+    this.process()
+  }
+
+  protected async process() {
+    // If too many workers are active or no orders left, do nothing
+    if (this.activeWorkers >= this.concurrency || this.queue.length === 0)
+      return
+
+    // Find an order for a stock that isn't locked
+    const order = this.queue.find(o => !this.stockLocks.has(o.symbolToken))
+
+    if (!order) return // No unlocked orders available yet
+
+    this.activeWorkers++ // Increment active workers
+    this.stockLocks.add(order.symbolToken) // Lock the stock
+    this.queue = this.queue.filter(o => o !== order) // Remove from queue
+
+    try {
+      await this.executeOrder(order) // Process the order
+    } catch (error) {
+      console.error(
+        `Failed to execute postback order: ${order.txnType}_${order.symbol}`,
+        error,
+      )
+      // Optionally re-enqueue the order or log the failure
+    } finally {
+      this.stockLocks.delete(order.symbolToken) // Unlock the stock
+      this.activeWorkers-- // Decrement active workers
+      this.process() // Trigger the next order processing
+    }
+
+    // Process additional orders if workers are available
+    this.process()
+  }
+
+  protected async executeOrder(order: ProcessOrderOptions) {
+    console.log(
+      `Executing postback order: ${order.txnType}_${order.symbol}, Quantity: ${order.qty}`,
+    )
+    await retryAsync(
+      async () => {
+        await placeOrderAndSaveIntoDB(order)
+      },
+      { delay: 1000, maxTry: 2 },
+    )
+  }
 }
 
-export async function processOrder({
-  brokerAccountId,
-  userId,
-  clientId,
-  signalId,
-  txnType,
-  exchange,
-  qty,
-  lotSize,
-  symbol,
-  symbolToken,
+export const orderPostbackQueue = remember(
+  'order-queue',
+  () => new OrderPostbackQueue(10),
+)
+
+export async function placeOrderAndSaveIntoDB({
+  price = '0',
+  squareoff = '0',
+  stoploss = '0',
+  triggerprice = '0',
+  duration = 'DAY',
+  ...options
 }: ProcessOrderOptions) {
-  const { data: tokens, error } = await getToken({ brokerAccountId, userId })
-  if (error || !tokens) {
-    throw new Error('Unable to fetch token.')
-  }
-
-  const positions = await getPositions({ authToken: tokens.authToken })
-
-  const isPendingTrade = positions?.find(position => {
-    return (
-      position.symboltoken === symbolToken &&
-      position.sellqty !== position.buyqty
-    )
-  })
-  console.log(`🚀 ~ isPendingTrade ~ ${symbol}: ${Boolean(isPendingTrade)}`)
-
-  if (isPendingTrade) {
-    return null
-  }
-
   const orderRes = await placeOrder({
-    authToken: tokens.authToken,
-    variety: 'NORMAL',
-    ordertype: 'MARKET',
-    producttype: 'INTRADAY',
-    duration: 'DAY',
-    exchange: exchange,
-    tradingsymbol: symbol,
-    symboltoken: symbolToken,
-    transactiontype: txnType,
-    quantity: qty,
-    price: '0',
-    triggerprice: '0',
-    squareoff: '0',
-    stoploss: '0',
+    authToken: options.authToken,
+    variety: options.variety,
+    ordertype: options.orderType,
+    producttype: options.productType,
+    duration,
+    exchange: options.exchange,
+    tradingsymbol: options.symbol,
+    symboltoken: options.symbolToken,
+    transactiontype: options.txnType,
+    quantity: options.qty,
+    price,
+    triggerprice,
+    squareoff,
+    stoploss,
   })
 
   console.log('🚀 ~ orderRes:', orderRes)
 
   if (!orderRes) {
-    throw new Error('Unable to create order.')
+    throw new Error(
+      `Unable to create order: ${options.txnType}_${options.symbol}`,
+    )
   }
 
-  await db.orderHistory.create({
-    data: {
-      brokerOrderId: orderRes.orderid,
-      brokerUniqueOrderId: orderRes.uniqueorderid,
-      clientId,
-
-      price: 0,
-      qty,
-      lotSize,
-      filledShares: 0,
-      unfilledShares: qty * lotSize,
-      txnType,
-      status: 'PENDING',
-      variety: 'NORMAL',
-      orderType: 'MARKET',
-      productType: 'INTRADAY',
-
-      exchange,
-      symbol,
-      symbolToken,
-
-      userId,
-      signalId,
-      brokerAccountId,
+  await retryAsync(
+    async () => {
+      await db.orderHistory.create({
+        data: {
+          brokerOrderId: orderRes.orderid,
+          brokerUniqueOrderId: orderRes.uniqueorderid,
+          clientId: options.clientId,
+          price: 0,
+          qty: options.qty,
+          lotSize: options.lotSize,
+          filledShares: 0,
+          unfilledShares: options.qty * options.lotSize,
+          txnType: options.txnType,
+          status: 'PENDING',
+          variety: options.variety,
+          orderType: options.orderType,
+          productType: options.productType,
+          exchange: options.exchange,
+          symbol: options.symbol,
+          symbolToken: options.symbolToken,
+          userId: options.userId,
+          signalId: options.signalId,
+          brokerAccountId: options.brokerAccountId,
+          parentOrderId: options.parentOrderId ?? undefined,
+        },
+      })
     },
-  })
+    { delay: 100, maxTry: 2 },
+  )
+  return null
 }
 
 export function calculateTargetAndStoplossPrice({

@@ -13,7 +13,7 @@ import {
 } from '~/types/angleone'
 import { fetchClient } from './fetch-client.server'
 
-interface PlaceOrderReq {
+export interface PlaceOrderReq {
   variety: OrderVariety
   tradingsymbol: string
   symboltoken: string
