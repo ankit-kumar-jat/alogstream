@@ -4,6 +4,11 @@ FROM node:22-alpine AS base
 # set for base and all layer that inherit from it
 ENV NODE_ENV=production
 
+# Following is required to work prisma correctly
+# AS libssl is removed from /lib/libssl.so.3 dir from node:22-alpine3.21
+# so either use node:22-alpine3.20 or use following file
+RUN ln -s /usr/lib/libssl.so.3 /lib/libssl.so.3
+
 # Install all node_modules, including dev dependencies
 FROM base AS deps
 
