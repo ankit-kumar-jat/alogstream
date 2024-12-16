@@ -2,7 +2,7 @@ import { OrderStatus } from '@prisma/client'
 import type { ActionFunctionArgs } from '@remix-run/node'
 import { retryAsync } from 'ts-retry'
 import { getToken } from '~/lib/broker/angleone.server'
-import { cancelOrder, getLTPData, placeOrder } from '~/lib/broker/order.server'
+import { cancelOrder, getLTPData } from '~/lib/broker/order.server'
 import {
   calculateTargetAndStoplossPrice,
   orderPostbackQueue,

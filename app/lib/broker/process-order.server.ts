@@ -74,12 +74,15 @@ class OrderQueue {
       return
 
     // Find an order for a stock that isn't locked
-    const order = this.queue.find(o => !this.stockLocks.has(o.symbolToken))
+    const order = this.queue.find(
+      o => !this.stockLocks.has(`${o.symbolToken}-${o.clientId}`),
+    )
 
     if (!order) return // No unlocked orders available yet
 
     this.activeWorkers++ // Increment active workers
-    this.stockLocks.add(order.symbolToken) // Lock the stock
+    this.stockLocks.add(`${order.symbolToken}-${order.clientId}`) // Lock the stock
+
     this.queue = this.queue.filter(o => o !== order) // Remove from queue
 
     try {
@@ -91,7 +94,7 @@ class OrderQueue {
       )
       // Optionally re-enqueue the order or log the failure
     } finally {
-      this.stockLocks.delete(order.symbolToken) // Unlock the stock
+      this.stockLocks.delete(`${order.symbolToken}-${order.clientId}`) // Unlock the stock
       this.activeWorkers-- // Decrement active workers
       this.process() // Trigger the next order processing
     }
@@ -102,7 +105,7 @@ class OrderQueue {
 
   protected async executeOrder(order: QueueItem) {
     console.log(
-      `Executing order: ${order.txnType}_${order.symbol}, Quantity: ${order.qty}`,
+      `Executing order: ${order.txnType}_${order.symbol}_${order.clientId}, Quantity: ${order.qty}`,
     )
     await retryAsync(
       async () => {
@@ -111,7 +114,7 @@ class OrderQueue {
           userId: order.userId,
         })
         if (error || !tokens) {
-          throw new Error('Unable to fetch token.')
+          throw new Error(`Unable to fetch token for ${order.clientId}`)
         }
 
         const positions = await getPositions({ authToken: tokens.authToken })
@@ -123,7 +126,7 @@ class OrderQueue {
           )
         })
         console.log(
-          `🚀 ~ isPendingTrade ~ ${order.symbol}: ${Boolean(isPendingTrade)}`,
+          `🚀 ~ isPendingTrade ~ ${order.symbol}_${order.clientId}: ${Boolean(isPendingTrade)}`,
         )
 
         if (isPendingTrade) {
@@ -149,12 +152,10 @@ export const orderQueue = remember('order-queue', () => new OrderQueue(10))
 class OrderPostbackQueue {
   activeWorkers: number
   queue: ProcessOrderOptions[]
-  stockLocks: Set<string>
   concurrency: number
 
   constructor(concurrency: number) {
     this.queue = []
-    this.stockLocks = new Set() // Tracks stocks currently being processed
     this.activeWorkers = 0 // Tracks active workers
     this.concurrency = concurrency // Maximum concurrent stocks
   }
@@ -169,25 +170,20 @@ class OrderPostbackQueue {
     if (this.activeWorkers >= this.concurrency || this.queue.length === 0)
       return
 
-    // Find an order for a stock that isn't locked
-    const order = this.queue.find(o => !this.stockLocks.has(o.symbolToken))
-
+    const order = this.queue.shift()
     if (!order) return // No unlocked orders available yet
 
     this.activeWorkers++ // Increment active workers
-    this.stockLocks.add(order.symbolToken) // Lock the stock
-    this.queue = this.queue.filter(o => o !== order) // Remove from queue
 
     try {
       await this.executeOrder(order) // Process the order
     } catch (error) {
       console.error(
-        `Failed to execute postback order: ${order.txnType}_${order.symbol}`,
+        `Failed to execute postback order: ${order.txnType}_${order.symbol}_${order.clientId}`,
         error,
       )
       // Optionally re-enqueue the order or log the failure
     } finally {
-      this.stockLocks.delete(order.symbolToken) // Unlock the stock
       this.activeWorkers-- // Decrement active workers
       this.process() // Trigger the next order processing
     }
@@ -198,7 +194,7 @@ class OrderPostbackQueue {
 
   protected async executeOrder(order: ProcessOrderOptions) {
     console.log(
-      `Executing postback order: ${order.txnType}_${order.symbol}, Quantity: ${order.qty}`,
+      `Executing postback order: ${order.txnType}_${order.symbol}_${order.clientId}, Quantity: ${order.qty}`,
     )
     await retryAsync(
       async () => {
@@ -243,7 +239,7 @@ export async function placeOrderAndSaveIntoDB({
 
   if (!orderRes) {
     throw new Error(
-      `Unable to create order: ${options.txnType}_${options.symbol}`,
+      `Unable to create order: ${options.txnType}_${options.symbol}_${options.clientId}`,
     )
   }
 
