@@ -228,7 +228,7 @@ export async function placeOrderAndSaveIntoDB({
     tradingsymbol: options.symbol,
     symboltoken: options.symbolToken,
     transactiontype: options.txnType,
-    quantity: options.qty,
+    quantity: options.qty * options.lotSize,
     price,
     triggerprice,
     squareoff,
