@@ -210,7 +210,7 @@ class OrderPostbackQueue {
 }
 
 export const orderPostbackQueue = remember(
-  'order-queue',
+  'order-postback-queue',
   () => new OrderPostbackQueue(10),
 )
 
