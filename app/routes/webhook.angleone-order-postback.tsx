@@ -92,13 +92,14 @@ export async function action({ request }: ActionFunctionArgs) {
       console.log(
         `🚀 ~ calculating TGPrice&SLPrice ~ price: ${formPayload.tradingsymbol} ${parseFloat(formPayload.averageprice)} ~ TG: ${signal.takeProfitValue.toNumber()} ~ SL: ${signal.stopLossValue.toNumber()} `,
       )
-      const { stopLossPrice, targetPrice } = calculateTargetAndStoplossPrice({
-        price: parseFloat(formPayload.averageprice),
-        target: signal.takeProfitValue.toNumber(),
-        stopLoss: signal.stopLossValue.toNumber(),
-        targetStopLossType: signal.targetStopLossType,
-        txnType: existingOrder.txnType,
-      })
+      const { stopLossPrice, targetPrice, slTriggerPrice } =
+        calculateTargetAndStoplossPrice({
+          price: parseFloat(formPayload.averageprice),
+          target: signal.takeProfitValue.toNumber(),
+          stopLoss: signal.stopLossValue.toNumber(),
+          targetStopLossType: signal.targetStopLossType,
+          txnType: existingOrder.txnType,
+        })
 
       const { data: tokens, error } = await getToken({
         brokerAccountId: existingOrder.brokerAccountId,
@@ -172,7 +173,7 @@ export async function action({ request }: ActionFunctionArgs) {
       orderPostbackQueue.enqueue({
         authToken: tokens.authToken,
         variety: 'STOPLOSS',
-        orderType: 'STOPLOSS_MARKET',
+        orderType: 'STOPLOSS_LIMIT',
         productType: 'INTRADAY',
         duration: 'DAY',
         exchange: existingOrder.exchange,
@@ -180,7 +181,7 @@ export async function action({ request }: ActionFunctionArgs) {
         symbolToken: existingOrder.symbolToken,
         txnType: txnTypeForSLTG,
         qty: existingOrder.qty,
-        price: '0',
+        price: slTriggerPrice.toFixed(2),
         triggerprice: stopLossPrice.toFixed(2),
         squareoff: '0',
         stoploss: '0',
@@ -224,7 +225,8 @@ export async function action({ request }: ActionFunctionArgs) {
       // This means SL or TG hit so cancle other SL or TG order
       formPayload.producttype === 'INTRADAY' &&
       (formPayload.ordertype === 'STOPLOSS_MARKET' ||
-        formPayload.ordertype === 'LIMIT') &&
+        formPayload.ordertype === 'LIMIT' ||
+        formPayload.ordertype === 'STOPLOSS_LIMIT') &&
       newOrderStatus === 'EXECUTED' &&
       existingOrder.parentOrderId
     ) {

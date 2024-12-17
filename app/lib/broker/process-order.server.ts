@@ -302,11 +302,13 @@ export function calculateTargetAndStoplossPrice({
     return {
       targetPrice: price + targetPrice,
       stopLossPrice: price - stopLossPrice,
+      slTriggerPrice: price - (stopLossPrice + 0.05),
     }
   } else {
     return {
       targetPrice: price - targetPrice,
       stopLossPrice: price + stopLossPrice,
+      slTriggerPrice: price + (stopLossPrice + 0.05),
     }
   }
 }
