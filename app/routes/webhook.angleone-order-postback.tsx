@@ -179,7 +179,7 @@ export async function action({ request }: ActionFunctionArgs) {
         symbol: existingOrder.symbol,
         symbolToken: existingOrder.symbolToken,
         txnType: txnTypeForSLTG,
-        qty: sharesToFill,
+        qty: existingOrder.qty,
         price: '0',
         triggerprice: stopLossPrice.toFixed(2),
         squareoff: '0',
@@ -206,7 +206,7 @@ export async function action({ request }: ActionFunctionArgs) {
         symbol: existingOrder.symbol,
         symbolToken: existingOrder.symbolToken,
         txnType: txnTypeForSLTG,
-        qty: sharesToFill,
+        qty: existingOrder.qty,
         price: targetPrice.toFixed(2),
         triggerprice: '0',
         squareoff: '0',
@@ -270,7 +270,7 @@ export async function action({ request }: ActionFunctionArgs) {
               data: { status: 'CANCELED' },
             })
           },
-          { delay: 750, maxTry: 2 },
+          { delay: 100, maxTry: 2 },
         ),
       )
     }
