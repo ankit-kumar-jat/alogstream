@@ -12,6 +12,17 @@ export function isIn<T>(values: readonly T[], x: any): x is T {
 }
 
 /**
+ * waits for provided time
+ * @param ms time in millisecond
+ * @returns Promise
+ */
+export function sleep(ms: number = 1000) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+await sleep(100)
+
+/**
  * Simple debounce implementation
  */
 export function debounce<

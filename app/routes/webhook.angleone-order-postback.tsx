@@ -8,6 +8,7 @@ import {
   orderPostbackQueue,
 } from '~/lib/broker/process-order.server'
 import { db } from '~/lib/db.server'
+import { sleep } from '~/lib/utils'
 import { AngleoneOrder } from '~/types/angleone'
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -87,6 +88,11 @@ export async function action({ request }: ActionFunctionArgs) {
       if (!signal) {
         console.log('🚀 ~ order-postback: signal not found')
         return Response.json({ success: true })
+      }
+
+      if (signal.exchange === 'NFO' || signal.exchange === 'BFO') {
+        // wait 1 secound in case of F&O
+        await sleep(1000)
       }
 
       console.log(
