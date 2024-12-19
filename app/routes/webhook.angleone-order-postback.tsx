@@ -90,11 +90,6 @@ export async function action({ request }: ActionFunctionArgs) {
         return Response.json({ success: true })
       }
 
-      if (signal.exchange === 'NFO' || signal.exchange === 'BFO') {
-        // wait 1 secound in case of F&O
-        await sleep(1000)
-      }
-
       console.log(
         `🚀 ~ calculating TGPrice&SLPrice ~ price: ${formPayload.tradingsymbol} ${parseFloat(formPayload.averageprice)} ~ TG: ${signal.takeProfitValue.toNumber()} ~ SL: ${signal.stopLossValue.toNumber()} `,
       )
@@ -198,6 +193,11 @@ export async function action({ request }: ActionFunctionArgs) {
         brokerAccountId: existingOrder.brokerAccountId,
         parentOrderId: existingOrder.id,
       })
+
+      if (signal.exchange === 'NFO' || signal.exchange === 'BFO') {
+        // Skip target order creation for F&O orders
+        return Response.json({ success: true })
+      }
       //Creates TG order with parentOrderId
       console.log(
         '🚀 ~ order-postback: Creating TG order: parentOrderId:',
@@ -225,6 +225,8 @@ export async function action({ request }: ActionFunctionArgs) {
         brokerAccountId: existingOrder.brokerAccountId,
         parentOrderId: existingOrder.id,
       })
+
+      return Response.json({ success: true })
     }
 
     if (
