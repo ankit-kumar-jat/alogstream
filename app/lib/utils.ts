@@ -20,8 +20,6 @@ export function sleep(ms: number = 1000) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-await sleep(100)
-
 /**
  * Simple debounce implementation
  */
