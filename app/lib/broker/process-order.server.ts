@@ -117,21 +117,22 @@ class OrderQueue {
           throw new Error(`Unable to fetch token for ${order.clientId}`)
         }
 
-        const positions = await getPositions({ authToken: tokens.authToken })
+        // if you don't want to create multiple orders with same stock uncomment following
+        // const positions = await getPositions({ authToken: tokens.authToken })
 
-        const isPendingTrade = positions?.find(position => {
-          return (
-            position.symboltoken === order.symbolToken &&
-            position.sellqty !== position.buyqty
-          )
-        })
-        console.log(
-          `🚀 ~ isPendingTrade ~ ${order.symbol}_${order.clientId}: ${Boolean(isPendingTrade)}`,
-        )
+        // const isPendingTrade = positions?.find(position => {
+        //   return (
+        //     position.symboltoken === order.symbolToken &&
+        //     position.sellqty !== position.buyqty
+        //   )
+        // })
+        // console.log(
+        //   `🚀 ~ isPendingTrade ~ ${order.symbol}_${order.clientId}: ${Boolean(isPendingTrade)}`,
+        // )
 
-        if (isPendingTrade) {
-          return null
-        }
+        // if (isPendingTrade) {
+        //   return null
+        // }
 
         await placeOrderAndSaveIntoDB({
           ...order,
